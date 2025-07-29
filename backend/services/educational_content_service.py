@@ -57,9 +57,9 @@ class EducationalContentService:
         """
         AI kullanarak eğitim önerileri oluştur
         """
-        # API key kontrolü
-        if GEMINI_API_KEY == "your_gemini_api_key_here":
-            return self._get_fallback_recommendations(topic, skill_level, limit)
+        if not GEMINI_API_KEY:
+            # Anahtar yoksa fallback veya hata
+            pass
         
         try:
             # AI prompt'u oluştur

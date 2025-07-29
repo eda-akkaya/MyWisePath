@@ -17,7 +17,7 @@ class AIService:
         Gemini API kullanarak kullanıcı mesajına AI cevabı döndür
         """
         # API key kontrolü
-        if GEMINI_API_KEY == "your_gemini_api_key_here":
+        if not GEMINI_API_KEY:
             print("Gemini API key ayarlanmamış, fallback cevap döndürülüyor")
             return self.get_fallback_response(user_message)
         
@@ -62,7 +62,7 @@ class AIService:
         AI kullanarak kullanıcı mesajını analiz ederek öğrenme isteğini çıkarır
         """
         # API key kontrolü
-        if GEMINI_API_KEY == "your_gemini_api_key_here" or not GEMINI_API_KEY:
+        if not GEMINI_API_KEY:
             print("Gemini API key ayarlanmamış, basit analiz döndürülüyor")
             return self.get_simple_analysis(user_message)
         
@@ -71,7 +71,7 @@ class AIService:
             analysis_prompt = f"""
             Aşağıdaki kullanıcı mesajını analiz et ve JSON formatında cevap ver:
             
-            Kullanıcı mesajı: "{user_message}"
+            Kullanıcı mesajı: \"{user_message}\"
             
             Analiz etmen gereken alanlar:
             1. Öğrenme alanları (programlama, veri_bilimi, web_gelistirme, makine_ogrenmesi, mobil_gelistirme, devops)
@@ -98,16 +98,15 @@ class AIService:
                 # JSON bloğunu bul
                 json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
                 if json_match:
-                    analysis = json.loads(json_match.group())
-                    return analysis
+                    json_str = json_match.group(0)
+                    return json.loads(json_str)
                 else:
-                    raise ValueError("JSON bulunamadı")
-            except (json.JSONDecodeError, ValueError) as e:
+                    return self.get_simple_analysis(user_message)
+            except Exception as e:
                 print(f"JSON parse error: {e}")
                 return self.get_simple_analysis(user_message)
-                
         except Exception as e:
-            print(f"AI analysis error: {e}")
+            print(f"Gemini API Error: {e}")
             return self.get_simple_analysis(user_message)
 
     def get_simple_analysis(self, user_message: str) -> Dict[str, Any]:
@@ -198,7 +197,7 @@ class AIService:
         AI kullanarak analiz sonuçlarına göre yol haritası önerisi oluşturur
         """
         # API key kontrolü
-        if GEMINI_API_KEY == "your_gemini_api_key_here" or not GEMINI_API_KEY:
+        if not GEMINI_API_KEY:
             return self.get_simple_roadmap_suggestion(analysis)
         
         try:

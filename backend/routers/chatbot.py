@@ -561,5 +561,5 @@ async def debug_test():
         "timestamp": datetime.now().isoformat(),
         "ai_service_available": True,
         "educational_content_available": True,
-        "gemini_api_key_set": GEMINI_API_KEY != "AIzaSyC5lXi2ZF6oJROu0foFTxaOI_37QfchMMU"
+        "gemini_api_key_set": bool(GEMINI_API_KEY)
     } 

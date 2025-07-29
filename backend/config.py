@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Gemini API Configuration
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "your_gemini_api_key_here")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # JWT Configuration
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "mywisepath-secret-key-2024")

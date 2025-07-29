@@ -18,7 +18,7 @@ def generate_ai_roadmap(interests: List[str], skill_level: str, learning_goals: 
     
     # API key kontrolü
     from config import GEMINI_API_KEY
-    if GEMINI_API_KEY == "your_gemini_api_key_here" or not GEMINI_API_KEY:
+    if not GEMINI_API_KEY:
         print("Gemini API key ayarlanmamış, fallback roadmap döndürülüyor")
         return get_fallback_roadmap(interests, skill_level)
     

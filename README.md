@@ -584,9 +584,8 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 
 ## 📞 İletişim
 
-- **GitHub Issues**: [Proje Issues](https://github.com/yourusername/MyWisePath/issues)
-- **Email**: contact@mywisepath.com
-- **Discord**: [MyWisePath Community](https://discord.gg/mywisepath)
+- **Email**: edaakkaya12@hotmail.com.tr
+
 
 ---
 

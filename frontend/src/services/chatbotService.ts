@@ -83,6 +83,42 @@ export interface PopularEducationResponse {
   ai_generated: boolean;
 }
 
+export interface LiveContentSearchRequest {
+  topic: string;
+  skill_level?: string;
+  limit?: number;
+}
+
+export interface LiveContentSearchResponse {
+  topic: string;
+  skill_level: string;
+  content: ContentRecommendation[];
+  total_count: number;
+  timestamp: string;
+  live_search: boolean;
+}
+
+export interface DynamicRoadmapRequest {
+  topic: string;
+  skill_level?: string;
+  user_preferences?: {
+    skill_level?: string;
+    learning_style?: string;
+    preferred_platforms?: string[];
+    time_commitment?: string;
+    budget?: string;
+  };
+}
+
+export interface DynamicRoadmapResponse {
+  topic: string;
+  skill_level: string;
+  roadmap: any;
+  user_preferences: any;
+  timestamp: string;
+  live_generated: boolean;
+}
+
 class ChatbotService {
   async sendMessage(message: string): Promise<ChatResponse> {
     try {
@@ -171,6 +207,42 @@ class ChatbotService {
         throw new Error(`${statusCode}: ${detail}`);
       }
       throw new Error('500: Popüler eğitimler alınamadı');
+    }
+  }
+
+  async searchLiveContent(request: LiveContentSearchRequest): Promise<LiveContentSearchResponse> {
+    try {
+      const response = await api.post<LiveContentSearchResponse>('/api/v1/chatbot/search-live-content', {
+        topic: request.topic,
+        skill_level: request.skill_level || 'beginner',
+        limit: request.limit || 10
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
+        const detail = error.response?.data?.detail || 'Gerçek zamanlı içerik araması yapılamadı';
+        throw new Error(`${statusCode}: ${detail}`);
+      }
+      throw new Error('500: Gerçek zamanlı içerik araması yapılamadı');
+    }
+  }
+
+  async createDynamicRoadmap(request: DynamicRoadmapRequest): Promise<DynamicRoadmapResponse> {
+    try {
+      const response = await api.post<DynamicRoadmapResponse>('/api/v1/chatbot/create-dynamic-roadmap', {
+        topic: request.topic,
+        skill_level: request.skill_level || 'beginner',
+        user_preferences: request.user_preferences
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
+        const detail = error.response?.data?.detail || 'Dinamik roadmap oluşturulamadı';
+        throw new Error(`${statusCode}: ${detail}`);
+      }
+      throw new Error('500: Dinamik roadmap oluşturulamadı');
     }
   }
 }

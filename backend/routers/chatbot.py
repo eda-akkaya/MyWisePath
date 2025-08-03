@@ -1,13 +1,16 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime
+from typing import Dict, Any, List
 import random
+import asyncio
 
 from models.chatbot import ChatRequest, ChatResponse
 from models.roadmap import RoadmapRequest, Roadmap, Module, LearningGoal, SkillAssessment
 from utils.auth import verify_token
 from services.ai_service import ai_service
 from services.educational_content_service import educational_content_service
+from services.live_content_service import live_content_service
 from config import GEMINI_API_KEY
 
 router = APIRouter(prefix="/api/v1/chatbot", tags=["Chatbot"])
@@ -304,6 +307,57 @@ def create_roadmap_from_template(roadmap_request: RoadmapRequest, user_id: str) 
         
         return fallback_roadmap
 
+async def _enhance_roadmap_with_live_content(template_roadmap: Roadmap, dynamic_roadmap: Dict[str, Any]) -> Roadmap:
+    """Template roadmap'i gerçek zamanlı içeriklerle geliştir"""
+    try:
+        # Dinamik roadmap'ten modülleri al
+        dynamic_modules = dynamic_roadmap.get("modules", [])
+        
+        # Template modüllerini güncelle
+        for i, module in enumerate(template_roadmap.modules):
+            if i < len(dynamic_modules):
+                dynamic_module = dynamic_modules[i]
+                
+                # Dinamik kaynakları ekle
+                live_resources = []
+                for resource in dynamic_module.get("resources", []):
+                    live_resources.append(f"{resource['title']} ({resource['platform']}) - {resource['url']}")
+                
+                # Mevcut kaynaklarla birleştir
+                module.resources.extend(live_resources)
+                
+                # Dinamik açıklamayı güncelle
+                if dynamic_module.get("description"):
+                    module.description = f"{module.description}\n\nGüncel kaynaklar: {dynamic_module['description']}"
+        
+        # Yeni modüller ekle (eğer dinamik roadmap'te daha fazla modül varsa)
+        for i in range(len(template_roadmap.modules), len(dynamic_modules)):
+            dynamic_module = dynamic_modules[i]
+            
+            # Yeni modül oluştur
+            new_module = Module(
+                id=f"live_{i+1}",
+                title=dynamic_module.get("title", f"Modül {i+1}"),
+                description=dynamic_module.get("description", ""),
+                difficulty=template_roadmap.modules[0].difficulty if template_roadmap.modules else "beginner",
+                estimated_hours=10,  # varsayılan
+                prerequisites=[],
+                resources=[f"{r['title']} ({r['platform']}) - {r['url']}" for r in dynamic_module.get("resources", [])],
+                completed=False,
+                progress_percentage=0
+            )
+            
+            template_roadmap.modules.append(new_module)
+        
+        # Toplam süreyi güncelle
+        template_roadmap.total_estimated_hours = sum(module.estimated_hours for module in template_roadmap.modules)
+        
+        return template_roadmap
+        
+    except Exception as e:
+        print(f"Error enhancing roadmap with live content: {e}")
+        return template_roadmap
+
 @router.post("/query", response_model=ChatResponse)
 async def chat_with_bot(
     request: ChatRequest,
@@ -396,22 +450,44 @@ async def generate_roadmap_from_chat(
             analysis["skill_level"] = "beginner"
             analysis["timeline_months"] = 6
         
-        # Roadmap request oluştur
-        roadmap_request = RoadmapRequest(
-            skill_level=analysis.get("skill_level", "beginner"),
-            interests=analysis.get("learning_areas", []) + analysis.get("subtopics", []),
-            learning_goals=[f"{area} öğrenmek" for area in analysis.get("learning_areas", [])],
-            available_hours_per_week=10,  # varsayılan
-            target_timeline_months=analysis.get("timeline_months", 6)
+        # Gerçek zamanlı içerik araştırması yap
+        topic = analysis.get("learning_areas", ["programlama"])[0]
+        skill_level = analysis.get("skill_level", "beginner")
+        
+        # Kullanıcı tercihleri
+        user_preferences = {
+            "skill_level": skill_level,
+            "learning_style": "practical",  # pratik odaklı
+            "preferred_platforms": ["coursera", "udemy", "freecodecamp", "youtube"],
+            "time_commitment": "10 hours per week",
+            "budget": "free_and_paid"
+        }
+        
+        # Dinamik roadmap oluştur
+        dynamic_roadmap = await live_content_service.create_dynamic_roadmap(
+            topic, skill_level, user_preferences
         )
         
-        # Roadmap oluştur
-        roadmap = create_roadmap_from_template(roadmap_request, payload.get("sub"))
+        # Template roadmap ile birleştir
+        template_roadmap = create_roadmap_from_template(
+            RoadmapRequest(
+                skill_level=skill_level,
+                interests=analysis.get("learning_areas", []) + analysis.get("subtopics", []),
+                learning_goals=[f"{area} öğrenmek" for area in analysis.get("learning_areas", [])],
+                available_hours_per_week=10,
+                target_timeline_months=analysis.get("timeline_months", 6)
+            ),
+            payload.get("sub")
+        )
+        
+        # Dinamik içerikleri template'e ekle
+        enhanced_roadmap = await _enhance_roadmap_with_live_content(template_roadmap, dynamic_roadmap)
         
         return {
-            "roadmap": roadmap,
+            "roadmap": enhanced_roadmap,
             "analysis": analysis,
-            "message": f"'{request.message}' isteğinize göre {len(roadmap.modules)} modüllük bir yol haritası oluşturdum!",
+            "live_content": dynamic_roadmap,
+            "message": f"'{request.message}' isteğinize göre güncel eğitim kaynaklarıyla {len(enhanced_roadmap.modules)} modüllük bir yol haritası oluşturdum!",
             "timestamp": datetime.now().isoformat(),
             "success": True
         }
@@ -562,4 +638,78 @@ async def debug_test():
         "ai_service_available": True,
         "educational_content_available": True,
         "gemini_api_key_set": bool(GEMINI_API_KEY)
-    } 
+    }
+
+@router.post("/search-live-content")
+async def search_live_content(
+    topic: str,
+    skill_level: str = "beginner",
+    limit: int = 10,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Gerçek zamanlı internet araştırması yaparak eğitim içerikleri bul"""
+    
+    try:
+        # Token doğrulama
+        payload = verify_token(credentials.credentials)
+        if payload is None:
+            raise HTTPException(status_code=401, detail="Geçersiz token")
+        
+        # Gerçek zamanlı içerik ara
+        live_content = await live_content_service.search_live_content(topic, skill_level, limit)
+        
+        return {
+            "topic": topic,
+            "skill_level": skill_level,
+            "content": live_content,
+            "total_count": len(live_content),
+            "timestamp": datetime.now().isoformat(),
+            "live_search": True
+        }
+        
+    except Exception as e:
+        print(f"Live content search error: {e}")
+        raise HTTPException(status_code=500, detail="İçerik arama sırasında hata oluştu")
+
+@router.post("/create-dynamic-roadmap")
+async def create_dynamic_roadmap(
+    topic: str,
+    skill_level: str = "beginner",
+    user_preferences: dict = None,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Gerçek zamanlı araştırma ile dinamik roadmap oluştur"""
+    
+    try:
+        # Token doğrulama
+        payload = verify_token(credentials.credentials)
+        if payload is None:
+            raise HTTPException(status_code=401, detail="Geçersiz token")
+        
+        # Varsayılan tercihler
+        if user_preferences is None:
+            user_preferences = {
+                "skill_level": skill_level,
+                "learning_style": "practical",
+                "preferred_platforms": ["coursera", "udemy", "freecodecamp", "youtube"],
+                "time_commitment": "10 hours per week",
+                "budget": "free_and_paid"
+            }
+        
+        # Dinamik roadmap oluştur
+        dynamic_roadmap = await live_content_service.create_dynamic_roadmap(
+            topic, skill_level, user_preferences
+        )
+        
+        return {
+            "topic": topic,
+            "skill_level": skill_level,
+            "roadmap": dynamic_roadmap,
+            "user_preferences": user_preferences,
+            "timestamp": datetime.now().isoformat(),
+            "live_generated": True
+        }
+        
+    except Exception as e:
+        print(f"Dynamic roadmap creation error: {e}")
+        raise HTTPException(status_code=500, detail="Dinamik roadmap oluşturulurken hata oluştu") 

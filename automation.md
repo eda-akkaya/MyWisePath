@@ -227,9 +227,5 @@ E-posta otomasyonu ile ilgili sorunlar için:
 - Gmail güvenlik ayarlarını kontrol edin
 - Spam klasörünü kontrol edin
 
----
-
-**Test Tarihi**: 2024
-**Test Ortamı**: Windows 10
-**Test Durumu**: ✅ Başarılı
-**Son Güncelleme**: 2024 
+<img width="1119" height="678" alt="Ekran görüntüsü 2025-08-04 003236" src="https://github.com/user-attachments/assets/d39cbae1-8edd-44d0-92eb-a8b1e875d4d1" />
+<img width="1100" height="659" alt="Ekran görüntüsü 2025-08-04 003247" src="https://github.com/user-attachments/assets/557c1766-717f-4e29-b54d-b08643aca7e5" />

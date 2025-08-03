@@ -1,15 +1,23 @@
-# MyWisePath Environment Configuration
-# Bu dosyayı .env olarak kopyalayın ve kendi API key'lerinizi ekleyin
-
-# Google Gemini AI API Key
-# https://makersuite.google.com/app/apikey adresinden alabilirsiniz
+# Gemini API Configuration
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # JWT Configuration
-JWT_SECRET_KEY=mywisepath-secret-key-2024
+JWT_SECRET_KEY=your_jwt_secret_key_here
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-# Database Configuration (for future use)
+# Database Configuration
 MONGODB_URL=mongodb://localhost:27017
-DATABASE_NAME=mywisepath 
+DATABASE_NAME=mywisepath
+
+# Email Configuration
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_app_password_here
+EMAIL_FROM=noreply@mywisepath.com
+EMAIL_FROM_NAME=MyWisePath
+
+# Email Automation Settings
+WEEKLY_REMINDER_ENABLED=true
+PROGRESS_REPORT_ENABLED=true 

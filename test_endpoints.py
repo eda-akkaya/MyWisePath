@@ -96,12 +96,72 @@ def test_generate_roadmap(token):
             data = response.json()
             print(f"Roadmap created: {data.get('message', 'No message')}")
             print(f"Modules count: {len(data.get('roadmap', {}).get('modules', []))}")
+            print(f"Live content included: {data.get('live_content') is not None}")
             return True
         else:
             print(f"Generate Roadmap failed: {response.json()}")
             return False
     except Exception as e:
         print(f"Generate Roadmap Error: {e}")
+        return False
+
+def test_live_content_search(token):
+    """Test live content search with authentication"""
+    if not token:
+        print("No token available for live content search test")
+        return False
+    
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        search_data = {
+            "topic": "Python",
+            "skill_level": "beginner",
+            "limit": 5
+        }
+        response = requests.post(f"{BASE_URL}/api/v1/chatbot/search-live-content", json=search_data, headers=headers)
+        print(f"Live Content Search: {response.status_code}")
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Content found: {data.get('total_count', 0)} items")
+            print(f"Live search: {data.get('live_search', False)}")
+            return True
+        else:
+            print(f"Live Content Search failed: {response.json()}")
+            return False
+    except Exception as e:
+        print(f"Live Content Search Error: {e}")
+        return False
+
+def test_dynamic_roadmap(token):
+    """Test dynamic roadmap creation with authentication"""
+    if not token:
+        print("No token available for dynamic roadmap test")
+        return False
+    
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        roadmap_data = {
+            "topic": "React",
+            "skill_level": "intermediate",
+            "user_preferences": {
+                "learning_style": "practical",
+                "preferred_platforms": ["coursera", "udemy", "freecodecamp"],
+                "time_commitment": "15 hours per week",
+                "budget": "free_and_paid"
+            }
+        }
+        response = requests.post(f"{BASE_URL}/api/v1/chatbot/create-dynamic-roadmap", json=roadmap_data, headers=headers)
+        print(f"Dynamic Roadmap: {response.status_code}")
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Dynamic roadmap created: {data.get('roadmap', {}).get('title', 'No title')}")
+            print(f"Live generated: {data.get('live_generated', False)}")
+            return True
+        else:
+            print(f"Dynamic Roadmap failed: {response.json()}")
+            return False
+    except Exception as e:
+        print(f"Dynamic Roadmap Error: {e}")
         return False
 
 def main():
@@ -131,9 +191,13 @@ def main():
     if token:
         query_ok = test_chatbot_query(token)
         roadmap_ok = test_generate_roadmap(token)
+        live_search_ok = test_live_content_search(token)
+        dynamic_roadmap_ok = test_dynamic_roadmap(token)
     else:
         query_ok = False
         roadmap_ok = False
+        live_search_ok = False
+        dynamic_roadmap_ok = False
     
     print()
     print("=" * 50)
@@ -145,6 +209,8 @@ def main():
     print(f"Authentication: {'✅ PASS' if token else '❌ FAIL'}")
     print(f"Chatbot Query: {'✅ PASS' if query_ok else '❌ FAIL'}")
     print(f"Roadmap Generation: {'✅ PASS' if roadmap_ok else '❌ FAIL'}")
+    print(f"Live Content Search: {'✅ PASS' if live_search_ok else '❌ FAIL'}")
+    print(f"Dynamic Roadmap: {'✅ PASS' if dynamic_roadmap_ok else '❌ FAIL'}")
     print("=" * 50)
 
 if __name__ == "__main__":

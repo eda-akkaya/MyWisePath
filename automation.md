@@ -16,13 +16,13 @@ Bu doküman, MyWisePath platformunun e-posta otomasyonu özelliklerinin test edi
 - **İşletim Sistemi**: Windows 10
 - **Python Versiyonu**: 3.x
 - **SMTP Server**: Gmail (smtp.gmail.com:587)
-- **Test E-posta**: edaa52116@gmail.com
+- **Test E-posta**: your_email@gmail.com
 
 ## 📧 SMTP Konfigürasyonu
 
 ```env
-SMTP_USERNAME=edaa52116@gmail.com
-SMTP_PASSWORD=tfkz oqmx kuiy cmow
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 ```
@@ -63,8 +63,8 @@ SMTP_PORT=587
 
 **Çıktı Örneği**:
 ```
-📧 Test e-postası gönderiliyor: edaa52116@gmail.com
-E-posta başarıyla gönderildi: edaa52116@gmail.com
+📧 Test e-postası gönderiliyor: your_email@gmail.com
+E-posta başarıyla gönderildi: your_email@gmail.com
 ✅ Haftalık hatırlatıcı başarıyla gönderildi!
 ```
 

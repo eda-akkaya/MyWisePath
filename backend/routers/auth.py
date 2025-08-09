@@ -52,6 +52,9 @@ async def register(user: UserCreate):
         "instant_email_enabled": True
     }
     
+    # Kullanıcıyı DUMMY_USERS'a ekle
+    DUMMY_USERS[user.email] = new_user
+    
     # Token oluştur
     access_token = create_access_token(
         data={"sub": user.email},
@@ -69,23 +72,25 @@ async def register(user: UserCreate):
 @router.post("/login", response_model=UserResponse)
 async def login(user_credentials: UserLogin):
     """Kullanıcı girişi (dummy user ile)"""
-    # Dummy user kontrolü
-    if user_credentials.email == "demo@mywisepath.com" and user_credentials.password == "demo123":
+    # Kullanıcıyı DUMMY_USERS'da ara
+    if user_credentials.email in DUMMY_USERS:
         user = DUMMY_USERS[user_credentials.email]
         
-        # Token oluştur
-        access_token = create_access_token(
-            data={"sub": user_credentials.email},
-            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        )
-        
-        return UserResponse(
-            id=user["id"],
-            username=user["username"],
-            email=user["email"],
-            created_at=DUMMY_USER["created_at"],
-            token=access_token
-        )
+        # Şifre kontrolü (gerçek uygulamada hash kontrolü yapılacak)
+        if user["password"] == user_credentials.password:
+            # Token oluştur
+            access_token = create_access_token(
+                data={"sub": user_credentials.email},
+                expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            )
+            
+            return UserResponse(
+                id=user["id"],
+                username=user["username"],
+                email=user["email"],
+                created_at=DUMMY_USER["created_at"],
+                token=access_token
+            )
     
     raise HTTPException(status_code=401, detail="Geçersiz email veya şifre")
 

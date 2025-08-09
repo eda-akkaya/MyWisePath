@@ -21,7 +21,7 @@ def test_email_service():
     # Test kullanıcısı
     test_user = {
         "username": "Test Kullanıcı",
-        "email": "test@example.com",
+        "email": "edaa52116@gmail.com",
         "learning_goals": ["Python", "JavaScript", "React"],
         "progress_data": {
             "completed_topics": ["HTML", "CSS", "JavaScript Temelleri"],
@@ -74,7 +74,7 @@ def test_automation_service():
     # Test e-postası gönder
     print(f"\n📧 Test E-postası Gönderiliyor...")
     success = automation_service.send_test_email(
-        email="test@example.com",
+        email="edaa52116@gmail.com",
         email_type="reminder"
     )
     

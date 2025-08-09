@@ -65,6 +65,7 @@ class EmailService:
             
         except Exception as e:
             print(f"E-posta gönderme hatası: {e}")
+            print(f"SMTP Ayarları: Server={self.smtp_server}, Port={self.smtp_port}, Username={'Set' if self.smtp_username else 'Not Set'}")
             return False
     
     def send_weekly_reminder(self, user_email: str, username: str, learning_goals: List[str] = None) -> bool:

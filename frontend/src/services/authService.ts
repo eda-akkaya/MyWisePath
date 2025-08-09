@@ -74,6 +74,7 @@ export interface EmailSettings {
 export interface InstantEmailRequest {
   email_type: string;
   custom_message?: string;
+  target_email?: string;
 }
 
 export const authService = {
@@ -153,7 +154,7 @@ export const authService = {
       throw new Error('Token bulunamadı');
     }
 
-    const response = await fetch(`${API_BASE_URL}/automation/email-settings`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/automation/email-settings`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -173,7 +174,7 @@ export const authService = {
       throw new Error('Token bulunamadı');
     }
 
-    const response = await fetch(`${API_BASE_URL}/automation/email-settings`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/automation/email-settings`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -195,7 +196,7 @@ export const authService = {
       throw new Error('Token bulunamadı');
     }
 
-    const response = await fetch(`${API_BASE_URL}/automation/send-instant-email`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/automation/send-instant-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

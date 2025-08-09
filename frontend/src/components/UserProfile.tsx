@@ -20,7 +20,7 @@ import {
   FormControlLabel,
   Divider
 } from '@mui/material';
-import { Close, Add, Delete, Email, Send } from '@mui/icons-material';
+import { Close, Add, Delete, Email, Notifications, Assessment } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { authService, UserProfileUpdate, EmailSettings } from '../services/authService';
 
@@ -38,6 +38,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
   const [newGoal, setNewGoal] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [emailAddress, setEmailAddress] = useState(user?.email || 'edaa52116@gmail.com');
   
   // Email settings state
   const [emailSettings, setEmailSettings] = useState<EmailSettings>({
@@ -163,12 +164,26 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
     setIsEmailLoading(true);
     setMessage(null);
 
+    // E-posta adresi kontrolü
+    if (!emailAddress || !emailAddress.includes('@')) {
+      setMessage({
+        type: 'error',
+        text: 'Lütfen geçerli bir e-posta adresi girin.'
+      });
+      setIsEmailLoading(false);
+      return;
+    }
+
     try {
-      await authService.sendInstantEmail({ email_type: emailType });
+      await authService.sendInstantEmail({ 
+        email_type: emailType,
+        target_email: emailAddress,
+        custom_message: `${emailType === 'reminder' ? 'Hatırlatıcı' : 'İlerleme raporu'} e-postası ${emailAddress} adresine gönderiliyor.`
+      });
       
       setMessage({
         type: 'success',
-        text: `Anında ${emailType === 'reminder' ? 'hatırlatıcı' : 'ilerleme raporu'} e-postası gönderildi!`
+        text: `✅ ${emailType === 'reminder' ? 'Hatırlatıcı' : 'İlerleme raporu'} e-postası ${emailAddress} adresine başarıyla gönderildi!`
       });
 
       setTimeout(() => {
@@ -215,25 +230,46 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
           </Alert>
         )}
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {/* Seviye Seçimi */}
-          <Box>
-            <FormControl fullWidth>
-              <InputLabel>Bilgi Seviyeniz</InputLabel>
-              <Select
-                value={skillLevel}
-                onChange={(e) => setSkillLevel(e.target.value)}
-                label="Bilgi Seviyeniz"
-              >
-                <MenuItem value="beginner">Başlangıç</MenuItem>
-                <MenuItem value="intermediate">Orta Seviye</MenuItem>
-                <MenuItem value="advanced">İleri Seviye</MenuItem>
-              </Select>
-            </FormControl>
-            <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
-              Bu bilgi Bilge Rehber ✨'in size uygun seviyede cevaplar vermesini sağlar.
-            </Typography>
-          </Box>
+                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+           {/* E-posta Adresi */}
+           <Box>
+             <Typography variant="h6" gutterBottom>
+               E-posta Adresiniz
+             </Typography>
+             <TextField
+               fullWidth
+               label="E-posta Adresi"
+               value={emailAddress}
+               onChange={(e) => setEmailAddress(e.target.value)}
+               type="email"
+               placeholder="ornek@email.com"
+               helperText="E-postalar bu adrese gönderilecek"
+             />
+             <Box sx={{ mt: 1 }}>
+               <Typography variant="caption" color="textSecondary">
+                 📧 Mevcut e-posta: {user?.email || 'Belirtilmemiş'}
+               </Typography>
+             </Box>
+           </Box>
+
+           {/* Seviye Seçimi */}
+           <Box>
+             <FormControl fullWidth>
+               <InputLabel>Bilgi Seviyeniz</InputLabel>
+               <Select
+                 value={skillLevel}
+                 onChange={(e) => setSkillLevel(e.target.value)}
+                 label="Bilgi Seviyeniz"
+               >
+                 <MenuItem value="beginner">Başlangıç</MenuItem>
+                 <MenuItem value="intermediate">Orta Seviye</MenuItem>
+                 <MenuItem value="advanced">İleri Seviye</MenuItem>
+               </Select>
+             </FormControl>
+             <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+               Bu bilgi Bilge Rehber ✨'in size uygun seviyede cevaplar vermesini sağlar.
+             </Typography>
+           </Box>
 
           {/* İlgi Alanları */}
           <Box>
@@ -410,19 +446,31 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
                     variant="contained"
                     onClick={() => handleSendInstantEmail('reminder')}
                     disabled={isEmailLoading}
-                    startIcon={<Send />}
+                    startIcon={<Notifications />}
                     size="small"
+                    sx={{
+                      bgcolor: 'success.main',
+                      '&:hover': {
+                        bgcolor: 'success.dark',
+                      },
+                    }}
                   >
-                    Hatırlatıcı Gönder
+                    {isEmailLoading ? 'Gönderiliyor...' : 'Hatırlatıcı Gönder'}
                   </Button>
                   <Button
                     variant="contained"
                     onClick={() => handleSendInstantEmail('progress')}
                     disabled={isEmailLoading}
-                    startIcon={<Send />}
+                    startIcon={<Assessment />}
                     size="small"
+                    sx={{
+                      bgcolor: 'info.main',
+                      '&:hover': {
+                        bgcolor: 'info.dark',
+                      },
+                    }}
                   >
-                    İlerleme Raporu Gönder
+                    {isEmailLoading ? 'Gönderiliyor...' : 'İlerleme Raporu Gönder'}
                   </Button>
                 </Box>
               </Paper>

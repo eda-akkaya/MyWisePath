@@ -35,6 +35,7 @@ class EmailSettings(BaseModel):
 class InstantEmailRequest(BaseModel):
     email_type: str = "reminder"  # "reminder" veya "progress"
     custom_message: Optional[str] = None
+    target_email: Optional[str] = None  # Kullanıcının girdiği e-posta adresi
 
 @router.post("/start")
 async def start_automation():
@@ -216,11 +217,16 @@ async def send_instant_email(
     Anında e-posta gönder
     """
     try:
-        user_email = current_user.get("email")
+        # Kullanıcının girdiği e-posta adresini kullan, yoksa mevcut kullanıcı e-postasını kullan
+        user_email = request.target_email or current_user.get("email")
         username = current_user.get("username", "Kullanıcı")
         
         if not user_email:
-            raise HTTPException(status_code=400, detail="Kullanıcı e-posta adresi bulunamadı")
+            raise HTTPException(status_code=400, detail="E-posta adresi bulunamadı")
+        
+        # E-posta adresi formatını kontrol et
+        if '@' not in user_email or user_email.count('@') != 1 or '.' not in user_email.split('@')[1]:
+            raise HTTPException(status_code=400, detail="Geçersiz e-posta adresi formatı")
         
         # Kullanıcının e-posta ayarlarını kontrol et
         # Gerçek uygulamada veritabanından alınacak
@@ -265,6 +271,9 @@ async def send_instant_email(
         else:
             raise HTTPException(status_code=500, detail="E-posta gönderilemedi")
             
+    except HTTPException:
+        # Re-raise HTTP exceptions as they are
+        raise
     except Exception as e:
         print(f"Anında e-posta hatası: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Anında e-posta hatası: {str(e)}")

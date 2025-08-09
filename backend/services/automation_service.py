@@ -21,7 +21,7 @@ class AutomationService:
             {
                 "id": "1",
                 "username": "Ahmet Yılmaz",
-                "email": "ahmet@example.com",
+                "email": "edaa52116@gmail.com",
                 "learning_goals": ["Python Programlama", "Web Geliştirme", "Veri Analizi"],
                 "progress_data": {
                     "completed_topics": ["Python Temelleri", "HTML/CSS", "JavaScript"],
@@ -204,7 +204,7 @@ class AutomationService:
                 except Exception as e:
                     print(f"Aylık e-posta hatası ({user['email']}): {e}")
     
-    def send_test_email(self, email: str, email_type: str = "reminder"):
+    def send_test_email(self, email: str = "edaa52116@gmail.com", email_type: str = "reminder"):
         """
         Test e-postası gönder
         """

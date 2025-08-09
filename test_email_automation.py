@@ -126,7 +126,7 @@ def test_add_user():
     new_user = {
         "id": "3",
         "username": "Test Kullanıcı",
-        "email": "test@example.com",
+        "email": "edaa52116@gmail.com",
         "learning_goals": ["Test Hedef 1", "Test Hedef 2"],
         "progress_data": {
             "completed_topics": ["Test Konu 1"],

@@ -3,46 +3,54 @@ from typing import Optional, Dict, List, Any
 from config import GEMINI_API_KEY
 import json
 import re
+from services.serp_ai_service import serp_ai_service
 
 # Gemini API'yi yapılandır
 genai.configure(api_key=GEMINI_API_KEY)
 
 class AIService:
     def __init__(self):
-        # Gemini model'ini başlat
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = None
+        self._initialize_model()
+
+    def _initialize_model(self):
+        """Gemini model'ini başlat"""
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=GEMINI_API_KEY)
+            self.model = genai.GenerativeModel('gemini-pro')
+            print("Gemini model başarıyla başlatıldı")
+        except Exception as e:
+            print(f"Gemini model başlatma hatası: {e}")
+            self.model = None
+
+    def get_ai_response(self, user_message: str, user_context: Optional[dict] = None, user_profile: Optional[dict] = None, roadmap_info: Optional[dict] = None) -> str:
+        """
+        AI ile kullanıcı mesajına cevap ver
         
-    def get_ai_response(self, user_message: str, user_context: Optional[dict] = None) -> str:
+        Args:
+            user_message: Kullanıcı mesajı
+            user_context: Kullanıcı context'i (eski parametre)
+            user_profile: Kullanıcı profil bilgileri (eski parametre)
+            roadmap_info: Roadmap oluşturma sırasındaki kullanıcı bilgileri (yeni parametre)
         """
-        Gemini API kullanarak kullanıcı mesajına AI cevabı döndür
-        """
-        # API key kontrolü
-        if not GEMINI_API_KEY:
-            print("Gemini API key ayarlanmamış, fallback cevap döndürülüyor")
-            return self.get_fallback_response(user_message)
         
         try:
-            # Sistem prompt'u oluştur
-            system_prompt = """Sen MyWisePath öğrenme platformunun AI asistanısın. 
-            Kullanıcılara öğrenme yolculuklarında yardımcı oluyorsun.
+            # Dinamik sistem prompt'u oluştur - roadmap bilgileri öncelikli
+            if roadmap_info:
+                system_prompt = self._generate_roadmap_based_system_prompt(roadmap_info)
+            else:
+                system_prompt = self._generate_dynamic_system_prompt(user_profile)
             
-            Özelliklerin:
-            - Öğrenme konularında rehberlik etme
-            - Yol haritası önerileri sunma
-            - Programlama, veri bilimi, web geliştirme konularında bilgi verme
-            - Motivasyonel ve destekleyici olma
-            - Türkçe cevap verme
-            - Kullanıcı isteklerini analiz edip uygun öğrenme alanlarını belirleme
-            
-            Kullanıcı profil bilgileri: {user_context}
-            
-            Eğer kullanıcı bir konu öğrenmek istiyorsa, o konuyla ilgili detaylı bilgi ver ve yol haritası oluşturma önerisi sun.
-            Kısa, net ve yardımcı cevaplar ver. Maksimum 3-4 cümle."""
-            
-            # Kullanıcı context'ini formatla
+            # Kullanıcı context'ini formatla (geriye uyumluluk için)
             context_str = ""
             if user_context:
                 context_str = f"Kullanıcı bilgileri: {user_context}"
+            
+            # Profil bilgilerini ekle
+            if user_profile:
+                profile_info = self._format_user_profile(user_profile)
+                context_str += f"\n{profile_info}"
             
             system_prompt = system_prompt.format(user_context=context_str)
             
@@ -56,6 +64,282 @@ class AIService:
             print(f"Gemini API Error: {e}")
             # Fallback cevap
             return self.get_fallback_response(user_message)
+
+    def _generate_dynamic_system_prompt(self, user_profile: Optional[dict] = None) -> str:
+        """
+        Kullanıcı profil bilgilerine göre dinamik sistem prompt'u oluştur
+        """
+        base_prompt = """Sen MyWisePath öğrenme platformunun Bilge Rehber ✨'sin. 
+        Kullanıcılara öğrenme yolculuklarında yardımcı oluyorsun.
+        
+        Özelliklerin:
+        - Öğrenme konularında rehberlik etme
+        - Yol haritası önerileri sunma
+        - Programlama, veri bilimi, web geliştirme konularında bilgi verme
+        - Motivasyonel ve destekleyici olma
+        - Türkçe cevap verme
+        - Kullanıcı isteklerini analiz edip uygun öğrenme alanlarını belirleme"""
+        
+        if not user_profile:
+            return base_prompt + """
+            
+            Kullanıcı profil bilgileri: {user_context}
+            
+            Eğer kullanıcı bir konu öğrenmek istiyorsa, o konuyla ilgili detaylı bilgi ver ve yol haritası oluşturma önerisi sun.
+            Kısa, net ve yardımcı cevaplar ver. Maksimum 3-4 cümle."""
+        
+        # Kullanıcı seviyesine göre prompt ayarla
+        skill_level = user_profile.get('skill_level', 'beginner')
+        interests = user_profile.get('interests', [])
+        learning_goals = user_profile.get('learning_goals', [])
+        
+        # Seviyeye göre özel talimatlar
+        level_instructions = self._get_level_specific_instructions(skill_level)
+        
+        # İlgi alanlarına göre özel talimatlar
+        interest_instructions = self._get_interest_specific_instructions(interests)
+        
+        # Öğrenme hedeflerine göre özel talimatlar
+        goal_instructions = self._get_goal_specific_instructions(learning_goals)
+        
+        dynamic_prompt = base_prompt + f"""
+        
+        {level_instructions}
+        {interest_instructions}
+        {goal_instructions}
+        
+        Kullanıcı profil bilgileri: {{user_context}}
+        
+        Bu kullanıcının seviyesi: {skill_level}
+        İlgi alanları: {', '.join(interests) if interests else 'Belirtilmemiş'}
+        Öğrenme hedefleri: {', '.join(learning_goals) if learning_goals else 'Belirtilmemiş'}
+        
+        Kullanıcının seviyesine ve ilgi alanlarına uygun, kişiselleştirilmiş cevaplar ver.
+        Eğer kullanıcı bir konu öğrenmek istiyorsa, seviyesine uygun detaylı bilgi ver ve yol haritası oluşturma önerisi sun.
+        Kısa, net ve yardımcı cevaplar ver. Maksimum 3-4 cümle."""
+        
+        return dynamic_prompt
+
+    def _generate_roadmap_based_system_prompt(self, roadmap_info: dict) -> str:
+        """
+        Roadmap oluşturma sırasındaki kullanıcı bilgilerine göre dinamik sistem prompt'u oluştur
+        """
+        base_prompt = """Sen MyWisePath öğrenme platformunun Bilge Rehber ✨'sin. 
+        Kullanıcılara öğrenme yolculuklarında yardımcı oluyorsun.
+        
+        Özelliklerin:
+        - Öğrenme konularında rehberlik etme
+        - Yol haritası önerileri sunma
+        - Programlama, veri bilimi, web geliştirme konularında bilgi verme
+        - Motivasyonel ve destekleyici olma
+        - Türkçe cevap verme
+        - Kullanıcı isteklerini analiz edip uygun öğrenme alanlarını belirleme"""
+        
+        # Roadmap bilgilerini al
+        skill_level = roadmap_info.get('skill_level', 'beginner')
+        interests = roadmap_info.get('interests', [])
+        learning_goals = roadmap_info.get('learning_goals', [])
+        available_hours = roadmap_info.get('available_hours_per_week', 10)
+        timeline_months = roadmap_info.get('target_timeline_months', 6)
+        
+        # Seviyeye göre özel talimatlar
+        level_instructions = self._get_level_specific_instructions(skill_level)
+        
+        # İlgi alanlarına göre özel talimatlar
+        interest_instructions = self._get_interest_specific_instructions(interests)
+        
+        # Öğrenme hedeflerine göre özel talimatlar
+        goal_instructions = self._get_goal_specific_instructions(learning_goals)
+        
+        # Zaman planına göre özel talimatlar
+        time_instructions = self._get_time_based_instructions(available_hours, timeline_months)
+        
+        dynamic_prompt = base_prompt + f"""
+        
+        {level_instructions}
+        {interest_instructions}
+        {goal_instructions}
+        {time_instructions}
+        
+        Kullanıcı profil bilgileri: {{user_context}}
+        
+        Bu kullanıcının seviyesi: {skill_level}
+        İlgi alanları: {', '.join(interests) if interests else 'Belirtilmemiş'}
+        Öğrenme hedefleri: {', '.join(learning_goals) if learning_goals else 'Belirtilmemiş'}
+        Haftalık çalışma süresi: {available_hours} saat
+        Hedef süre: {timeline_months} ay
+        
+        Kullanıcının seviyesine, ilgi alanlarına ve zaman planına uygun, kişiselleştirilmiş cevaplar ver.
+        Eğer kullanıcı bir konu öğrenmek istiyorsa, seviyesine ve zaman planına uygun detaylı bilgi ver ve yol haritası oluşturma önerisi sun.
+        Kısa, net ve yardımcı cevaplar ver. Maksimum 3-4 cümle."""
+        
+        return dynamic_prompt
+
+    def _get_level_specific_instructions(self, skill_level: str) -> str:
+        """Seviyeye göre özel talimatlar"""
+        instructions = {
+            'beginner': """
+            - Temel kavramları açık ve basit şekilde açıkla
+            - Jargon kullanmaktan kaçın
+            - Adım adım rehberlik et
+            - Motivasyonel ol ve cesaretlendir
+            - Başlangıç kaynakları öner
+            """,
+            'intermediate': """
+            - Orta seviye kavramları detaylandır
+            - Pratik örnekler ver
+            - İleri seviye kaynaklara yönlendir
+            - Proje tabanlı öğrenme öner
+            - Best practice'leri vurgula
+            """,
+            'advanced': """
+            - İleri seviye konulara odaklan
+            - Karmaşık kavramları açıkla
+            - Uzman seviyesi kaynaklar öner
+            - Performans optimizasyonu konularına değin
+            - Güncel trendleri ve teknolojileri paylaş
+            """
+        }
+        return instructions.get(skill_level, instructions['beginner'])
+
+    def _get_interest_specific_instructions(self, interests: list) -> str:
+        """İlgi alanlarına göre özel talimatlar"""
+        if not interests:
+            return ""
+        
+        instructions = []
+        interests_lower = [interest.lower() for interest in interests]
+        
+        if any(word in interests_lower for word in ['ai', 'yapay zeka', 'machine learning', 'makine öğrenmesi']):
+            instructions.append("- AI ve ML konularında güncel bilgiler paylaş")
+            instructions.append("- TensorFlow, PyTorch gibi framework'ler hakkında bilgi ver")
+        
+        if any(word in interests_lower for word in ['web', 'frontend', 'backend', 'javascript', 'react']):
+            instructions.append("- Web geliştirme konularında pratik öneriler sun")
+            instructions.append("- Modern web teknolojileri hakkında bilgi ver")
+        
+        if any(word in interests_lower for word in ['python', 'programlama']):
+            instructions.append("- Python programlama konularında detaylı rehberlik et")
+            instructions.append("- Python ekosistemi ve kütüphaneler hakkında bilgi ver")
+        
+        if any(word in interests_lower for word in ['veri', 'data', 'analiz']):
+            instructions.append("- Veri analizi ve görselleştirme konularında yardım et")
+            instructions.append("- Pandas, NumPy, Matplotlib gibi kütüphaneler hakkında bilgi ver")
+        
+        return "\n".join(instructions) if instructions else ""
+
+    def _get_goal_specific_instructions(self, learning_goals: list) -> str:
+        """Öğrenme hedeflerine göre özel talimatlar"""
+        if not learning_goals:
+            return ""
+        
+        instructions = []
+        
+        for goal in learning_goals:
+            goal_lower = goal.lower()
+            if 'kariyer' in goal_lower or 'iş' in goal_lower:
+                instructions.append("- Kariyer odaklı öneriler sun")
+                instructions.append("- Endüstri trendlerini paylaş")
+            elif 'proje' in goal_lower:
+                instructions.append("- Proje tabanlı öğrenme öner")
+                instructions.append("- Portfolio geliştirme konularında yardım et")
+            elif 'sertifika' in goal_lower or 'sınav' in goal_lower:
+                instructions.append("- Sertifika programları hakkında bilgi ver")
+                instructions.append("- Sınav hazırlık stratejileri öner")
+        
+        return "\n".join(instructions) if instructions else ""
+
+    def _get_time_based_instructions(self, available_hours: int, timeline_months: int) -> str:
+        """Zaman planına göre özel talimatlar"""
+        instructions = []
+        
+        # Haftalık çalışma süresine göre
+        if available_hours <= 5:
+            instructions.append("- Yoğun programlar yerine esnek öğrenme yöntemleri öner")
+            instructions.append("- Kısa ve etkili öğrenme teknikleri paylaş")
+        elif available_hours <= 15:
+            instructions.append("- Dengeli bir öğrenme programı öner")
+            instructions.append("- Pratik projeler ve teorik bilgiyi dengeleyen yaklaşımlar sun")
+        else:
+            instructions.append("- Yoğun ve hızlı ilerleme odaklı programlar öner")
+            instructions.append("- İleri seviye projeler ve derinlemesine öğrenme teknikleri paylaş")
+        
+        # Hedef süreye göre
+        if timeline_months <= 3:
+            instructions.append("- Hızlı öğrenme stratejileri ve yoğun programlar öner")
+            instructions.append("- Odaklanmış ve hedefe yönelik yaklaşımlar sun")
+        elif timeline_months <= 6:
+            instructions.append("- Dengeli ve sürdürülebilir öğrenme planları öner")
+            instructions.append("- Adım adım ilerleme stratejileri paylaş")
+        else:
+            instructions.append("- Uzun vadeli ve kapsamlı öğrenme programları öner")
+            instructions.append("- Derinlemesine uzmanlaşma fırsatları sun")
+        
+        return "\n".join(instructions) if instructions else ""
+
+    def _format_user_profile(self, user_profile: dict) -> str:
+        """Kullanıcı profil bilgilerini formatla"""
+        profile_parts = []
+        
+        if user_profile.get('skill_level'):
+            profile_parts.append(f"Seviye: {user_profile['skill_level']}")
+        
+        if user_profile.get('interests'):
+            profile_parts.append(f"İlgi alanları: {', '.join(user_profile['interests'])}")
+        
+        if user_profile.get('learning_goals'):
+            profile_parts.append(f"Öğrenme hedefleri: {', '.join(user_profile['learning_goals'])}")
+        
+        return " | ".join(profile_parts) if profile_parts else ""
+
+    async def get_ai_response_with_serp_search(self, user_message: str, user_context: Optional[dict] = None, user_profile: Optional[dict] = None, roadmap_info: Optional[dict] = None) -> Dict[str, Any]:
+        """
+        Serp AI ile entegre AI cevabı döndür
+        
+        Args:
+            user_message: Kullanıcı mesajı
+            user_context: Kullanıcı context'i
+            user_profile: Kullanıcı profil bilgileri (eski parametre)
+            roadmap_info: Roadmap oluşturma sırasındaki kullanıcı bilgileri (yeni parametre)
+        """
+        try:
+            # Kullanıcı mesajından öğrenme kavramlarını çıkar
+            learning_concepts = serp_ai_service.extract_learning_concepts(user_message)
+            
+            # AI ile temel cevap al - roadmap bilgilerini geç
+            base_response = self.get_ai_response(user_message, user_context, user_profile, roadmap_info)
+            
+            # Eğer öğrenme kavramları bulunduysa, Serp AI ile arama yap
+            serp_results = []
+            if learning_concepts:
+                # Kullanıcı seviyesini al - roadmap bilgileri öncelikli
+                skill_level = None
+                if roadmap_info:
+                    skill_level = roadmap_info.get('skill_level', 'beginner')
+                elif user_profile:
+                    skill_level = user_profile.get('skill_level', 'beginner')
+                else:
+                    skill_level = 'beginner'
+                
+                for concept in learning_concepts[:3]:  # En fazla 3 kavram
+                    results = await serp_ai_service.search_educational_content(concept, skill_level, 3)
+                    serp_results.extend(results)
+            
+            return {
+                "message": base_response,
+                "learning_concepts": learning_concepts,
+                "serp_results": serp_results,
+                "has_educational_content": len(serp_results) > 0
+            }
+            
+        except Exception as e:
+            print(f"AI with Serp search error: {e}")
+            return {
+                "message": self.get_fallback_response(user_message),
+                "learning_concepts": [],
+                "serp_results": [],
+                "has_educational_content": False
+            }
 
     def analyze_learning_request(self, user_message: str) -> Dict[str, Any]:
         """
@@ -108,6 +392,38 @@ class AIService:
         except Exception as e:
             print(f"Gemini API Error: {e}")
             return self.get_simple_analysis(user_message)
+
+    async def analyze_learning_request_with_serp(self, user_message: str) -> Dict[str, Any]:
+        """
+        Serp AI ile entegre öğrenme isteği analizi
+        """
+        try:
+            # Temel analiz
+            base_analysis = self.analyze_learning_request(user_message)
+            
+            # Serp AI ile kavram çıkarma
+            learning_concepts = serp_ai_service.extract_learning_concepts(user_message)
+            
+            # Serp AI ile eğitim içeriği arama
+            serp_results = []
+            if learning_concepts:
+                for concept in learning_concepts[:3]:
+                    results = await serp_ai_service.search_educational_content(concept, base_analysis.get("skill_level", "beginner"), 2)
+                    serp_results.extend(results)
+            
+            # Analizi genişlet
+            enhanced_analysis = {
+                **base_analysis,
+                "extracted_concepts": learning_concepts,
+                "serp_results": serp_results,
+                "has_serp_content": len(serp_results) > 0
+            }
+            
+            return enhanced_analysis
+            
+        except Exception as e:
+            print(f"Enhanced analysis error: {e}")
+            return self.analyze_learning_request(user_message)
 
     def get_simple_analysis(self, user_message: str) -> Dict[str, Any]:
         """

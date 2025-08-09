@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import random
 import asyncio
 
@@ -11,6 +11,7 @@ from utils.auth import verify_token
 from services.ai_service import ai_service
 from services.educational_content_service import educational_content_service
 from services.live_content_service import live_content_service
+from services.serp_ai_service import serp_ai_service
 from config import GEMINI_API_KEY
 
 router = APIRouter(prefix="/api/v1/chatbot", tags=["Chatbot"])
@@ -358,74 +359,73 @@ async def _enhance_roadmap_with_live_content(template_roadmap: Roadmap, dynamic_
         print(f"Error enhancing roadmap with live content: {e}")
         return template_roadmap
 
+# Roadmap bilgilerini saklamak için basit bir cache
+roadmap_cache = {}
+
+async def get_user_roadmap_info(user_id: str) -> Optional[dict]:
+    """Kullanıcının en son roadmap oluşturma bilgilerini al"""
+    return roadmap_cache.get(user_id)
+
 @router.post("/query", response_model=ChatResponse)
-async def chat_with_bot(
-    request: ChatRequest,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    """AI destekli chatbot ile sohbet et"""
+async def chat_with_bot(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Chatbot ile konuş"""
+    
+    # Token doğrulama
+    payload = verify_token(credentials.credentials)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Geçersiz token")
+    
+    user_id = payload.get("sub")
+    
+    # Kullanıcının roadmap bilgilerini al
+    roadmap_info = await get_user_roadmap_info(user_id)
+    
+    # Eğer roadmap bilgisi yoksa, kullanıcıya roadmap oluşturmasını öner
+    if not roadmap_info:
+        return ChatResponse(
+            message="Merhaba! Size daha iyi yardımcı olabilmem için önce bir yol haritası oluşturmanızı öneriyorum. Dashboard'da 'Yeni Yol Haritası Oluştur' butonuna tıklayarak başlayabilirsiniz. Bu sayede ilgi alanlarınızı, seviyenizi ve hedeflerinizi belirleyebilirim.",
+            timestamp=datetime.now(),
+            has_roadmap_suggestion=True
+        )
     
     try:
-        # Token doğrulama
-        payload = verify_token(credentials.credentials)
-        if payload is None:
-            raise HTTPException(status_code=401, detail="Geçersiz token")
-        
-        # Kullanıcı context'ini oluştur (gelecekte veritabanından alınacak)
-        user_context = {
-            "user_id": payload.get("sub"),
-            "interests": ["programlama", "öğrenme"],
-            "skill_level": "beginner"
-        }
-        
-        # Kullanıcı mesajını AI ile analiz et
-        analysis = ai_service.analyze_learning_request(request.message)
-        
-        # Debug için analiz sonucunu yazdır
-        print(f"Chatbot Analysis: {analysis}")
-        
-        # Eğer öğrenme isteği varsa, özel cevap oluştur
-        if analysis.get("has_learning_request", False):
-            # AI ile yol haritası önerisi oluştur
-            roadmap_suggestion = ai_service.generate_roadmap_suggestion(analysis)
-            
-            # AI ile eğitim içerik önerileri al
-            content_recommendations = []
-            for area in analysis.get("learning_areas", []):
-                recommendations = educational_content_service.get_content_recommendations(
-                    area, analysis.get("skill_level", "beginner"), 2
-                )
-                content_recommendations.extend(recommendations)
-            
-            # AI ile cevabı oluştur
-            response_parts = [roadmap_suggestion]
-            
-            if content_recommendations:
-                response_parts.append("\n\nÖnerilen eğitim kaynakları:")
-                for i, rec in enumerate(content_recommendations[:3], 1):
-                    response_parts.append(f"{i}. {rec['title']} ({rec['platform']}) - {rec['url']}")
-            
-            bot_response = "\n".join(response_parts)
-        else:
-            # AI ile genel cevap al
-            bot_response = ai_service.get_ai_response(request.message, user_context)
+        # AI ile kişiselleştirilmiş cevap al - roadmap bilgilerini kullan
+        enhanced_response = await ai_service.get_ai_response_with_serp_search(
+            request.message, 
+            user_context=None, 
+            user_profile=None,  # Artık kullanmıyoruz
+            roadmap_info=roadmap_info  # Roadmap bilgilerini kullan
+        )
         
         return ChatResponse(
-            message=bot_response,
-            timestamp=datetime.now().isoformat(),
-            success=True
+            message=enhanced_response["message"],
+            timestamp=datetime.now(),
+            has_educational_content=enhanced_response["has_educational_content"],
+            serp_results=enhanced_response["serp_results"],
+            extracted_concepts=enhanced_response["learning_concepts"]
         )
-    except HTTPException:
-        # HTTPException'ları tekrar fırlat
-        raise
+        
     except Exception as e:
-        print(f"Error in chat_with_bot: {e}")
-        # Hata durumunda basit bir cevap döndür
-        return ChatResponse(
-            message="Üzgünüm, şu anda size yardımcı olamıyorum. Lütfen daha sonra tekrar deneyin.",
-            timestamp=datetime.now().isoformat(),
-            success=False
-        )
+        print(f"Chat error: {e}")
+        raise HTTPException(status_code=500, detail="Chatbot hatası")
+
+async def get_user_profile(user_id: str) -> dict:
+    """Kullanıcı profil bilgilerini al (dummy data - gerçek uygulamada veritabanından gelecek)"""
+    # Dummy user data - gerçek uygulamada veritabanından alınacak
+    dummy_users = {
+        "demo@mywisepath.com": {
+            "skill_level": "beginner",
+            "interests": ["AI", "Machine Learning", "Data Analysis"],
+            "learning_goals": ["Veri Bilimi", "Python Programlama"]
+        }
+    }
+    
+    # Email'i user_id olarak kullan (token'dan gelen sub)
+    return dummy_users.get(user_id, {
+        "skill_level": "beginner",
+        "interests": ["programlama", "öğrenme"],
+        "learning_goals": ["yeni teknolojiler öğrenmek"]
+    })
 
 @router.post("/generate-roadmap")
 async def generate_roadmap_from_chat(
@@ -483,6 +483,16 @@ async def generate_roadmap_from_chat(
         # Dinamik içerikleri template'e ekle
         enhanced_roadmap = await _enhance_roadmap_with_live_content(template_roadmap, dynamic_roadmap)
         
+        # Roadmap bilgisini cache'e kaydet
+        roadmap_cache[payload.get("sub")] = {
+            "roadmap_id": enhanced_roadmap.id,
+            "title": enhanced_roadmap.title,
+            "description": enhanced_roadmap.description,
+            "total_estimated_hours": enhanced_roadmap.total_estimated_hours,
+            "completed_modules": enhanced_roadmap.completed_modules,
+            "overall_progress": enhanced_roadmap.overall_progress
+        }
+
         return {
             "roadmap": enhanced_roadmap,
             "analysis": analysis,
@@ -548,6 +558,104 @@ async def get_content_recommendations(
         print(f"Error getting content recommendations: {e}")
         raise HTTPException(status_code=500, detail="Eğitim önerileri alınırken hata oluştu")
 
+@router.post("/search-with-serp")
+async def search_educational_content_with_serp(
+    request: ChatRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Serp AI ile eğitim içeriği ara"""
+    
+    try:
+        # Token doğrulama
+        payload = verify_token(credentials.credentials)
+        if payload is None:
+            raise HTTPException(status_code=401, detail="Geçersiz token")
+        
+        # Kullanıcı mesajından kavramları çıkar
+        learning_concepts = serp_ai_service.extract_learning_concepts(request.message)
+        
+        # Serp AI ile arama yap
+        all_results = []
+        for concept in learning_concepts[:3]:  # En fazla 3 kavram
+            results = await serp_ai_service.search_educational_content(concept, "beginner", 5)
+            all_results.extend(results)
+        
+        # Tekrarları kaldır
+        unique_results = []
+        seen_urls = set()
+        
+        for result in all_results:
+            if result["url"] not in seen_urls:
+                unique_results.append(result)
+                seen_urls.add(result["url"])
+        
+        return {
+            "query": request.message,
+            "extracted_concepts": learning_concepts,
+            "results": unique_results[:10],  # En iyi 10 sonuç
+            "total_count": len(unique_results),
+            "timestamp": datetime.now().isoformat(),
+            "serp_ai_generated": True
+        }
+        
+    except Exception as e:
+        print(f"Serp AI search error: {e}")
+        raise HTTPException(status_code=500, detail="Eğitim araması yapılırken hata oluştu")
+
+@router.get("/trending-educational-topics")
+async def get_trending_educational_topics(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Serp AI ile trend olan eğitim konularını getir"""
+    
+    try:
+        # Token doğrulama
+        payload = verify_token(credentials.credentials)
+        if payload is None:
+            raise HTTPException(status_code=401, detail="Geçersiz token")
+        
+        # Trend konuları al
+        trending_topics = await serp_ai_service.get_trending_educational_topics()
+        
+        return {
+            "trending_topics": trending_topics,
+            "total_count": len(trending_topics),
+            "timestamp": datetime.now().isoformat(),
+            "serp_ai_generated": True
+        }
+        
+    except Exception as e:
+        print(f"Trending topics error: {e}")
+        raise HTTPException(status_code=500, detail="Trend konular alınırken hata oluştu")
+
+@router.post("/extract-concepts")
+async def extract_learning_concepts(
+    request: ChatRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Kullanıcı mesajından öğrenme kavramlarını çıkar"""
+    
+    try:
+        # Token doğrulama
+        payload = verify_token(credentials.credentials)
+        if payload is None:
+            raise HTTPException(status_code=401, detail="Geçersiz token")
+        
+        # Kavramları çıkar
+        concepts = serp_ai_service.extract_learning_concepts(request.message)
+        
+        return {
+            "message": request.message,
+            "extracted_concepts": concepts,
+            "concept_count": len(concepts),
+            "timestamp": datetime.now().isoformat(),
+            "serp_ai_extracted": True
+        }
+        
+    except Exception as e:
+        print(f"Concept extraction error: {e}")
+        raise HTTPException(status_code=500, detail="Kavram çıkarma sırasında hata oluştu")
+
 @router.post("/search-education")
 async def search_education_content(
     query: str,
@@ -608,7 +716,7 @@ async def get_welcome_message():
     try:
         # AI ile karşılama mesajı oluştur
         welcome_prompt = """
-        Sen MyWisePath öğrenme platformunun AI asistanısın. 
+        Sen MyWisePath öğrenme platformunun Bilge Rehber ✨'sin. 
         Kullanıcıya kısa, samimi ve motivasyonel bir karşılama mesajı ver.
         Öğrenme yolculuğunda yardımcı olacağını belirt.
         Maksimum 2 cümle, Türkçe.

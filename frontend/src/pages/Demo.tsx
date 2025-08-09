@@ -47,7 +47,7 @@ const Demo: React.FC = () => {
       const response = await chatbotService.generateRoadmap(userInput);
       setRoadmap(response.roadmap);
       
-      // Get content recommendations for the first learning area
+      // İlk öğrenme alanı için içerik önerilerini al
       if (response.analysis.learning_areas.length > 0) {
         const area = response.analysis.learning_areas[0];
         const contentResponse = await chatbotService.getContentRecommendations(area, response.analysis.skill_level);
@@ -69,7 +69,7 @@ const Demo: React.FC = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
         <School sx={{ mr: 2, verticalAlign: 'middle' }} />
-        MyWisePath Demo - Akıllı Öğrenme Asistanı
+                 MyWisePath Demo - Bilge Rehber ✨
       </Typography>
 
       <Alert severity="info" sx={{ mb: 4 }}>

@@ -11,13 +11,26 @@ import {
   Link,
   Card,
   CardContent,
+  InputAdornment,
+  IconButton,
+  Fade,
+  Grow,
 } from '@mui/material';
-import { School, Login as LoginIcon } from '@mui/icons-material';
+import {
+  School,
+  Login as LoginIcon,
+  Email,
+  Lock,
+  Visibility,
+  VisibilityOff,
+  AutoAwesome,
+} from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -43,120 +56,298 @@ const Login: React.FC = () => {
     setPassword('demo123');
   };
 
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <Container component="main" maxWidth="sm">
       <Box
         sx={{
-          marginTop: 8,
+          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'center',
           alignItems: 'center',
+          py: 4,
         }}
       >
         {/* Logo ve Başlık */}
-        <Box sx={{ mb: 3, textAlign: 'center' }}>
-          <School sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-          <Typography component="h1" variant="h4" gutterBottom>
-            MyWisePath
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Kişiselleştirilmiş Öğrenme Platformu
-          </Typography>
-        </Box>
-
-        {/* Login Formu */}
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h2" variant="h5" gutterBottom>
-            Giriş Yap
-          </Typography>
-
-          {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Adresi"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Şifre"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={loading}
-              startIcon={<LoginIcon />}
+        <Grow in={true} timeout={800}>
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Box sx={{ position: 'relative', mb: 3 }}>
+              <School 
+                sx={{ 
+                  fontSize: 80, 
+                  color: 'primary.main',
+                  filter: 'drop-shadow(0 4px 8px rgba(99, 102, 241, 0.3))',
+                }} 
+              />
+              <AutoAwesome 
+                sx={{ 
+                  position: 'absolute',
+                  top: -10,
+                  right: -10,
+                  fontSize: 24,
+                  color: 'secondary.main',
+                  animation: 'pulse 2s infinite',
+                  '@keyframes pulse': {
+                    '0%': { opacity: 1 },
+                    '50%': { opacity: 0.5 },
+                    '100%': { opacity: 1 },
+                  },
+                }} 
+              />
+            </Box>
+            <Typography 
+              component="h1" 
+              variant="h3" 
+              gutterBottom
+              sx={{ 
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 1,
+              }}
             >
-              {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
-            </Button>
-          </Box>
-
-          {/* Demo Kullanıcı Bilgileri */}
-          <Card sx={{ width: '100%', mt: 2, bgcolor: 'grey.50' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Demo Kullanıcı
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Test için aşağıdaki bilgileri kullanabilirsiniz:
-              </Typography>
-              <Typography variant="body2" component="div">
-                <strong>Email:</strong> demo@mywisepath.com
-              </Typography>
-              <Typography variant="body2" component="div">
-                <strong>Şifre:</strong> demo123
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={handleDemoLogin}
-                sx={{ mt: 1 }}
-              >
-                Demo Bilgilerini Doldur
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Typography variant="body2">
-              Hesabınız yok mu?{' '}
-              <Link component={RouterLink} to="/register" variant="body2">
-                Kayıt Ol
-              </Link>
+              MyWisePath
+            </Typography>
+            <Typography 
+              variant="h6" 
+              color="text.secondary"
+              sx={{ fontWeight: 400 }}
+            >
+              Kişiselleştirilmiş Öğrenme Platformu
             </Typography>
           </Box>
-        </Paper>
+        </Grow>
+
+        {/* Login Formu */}
+        <Fade in={true} timeout={1000}>
+          <Paper
+            elevation={0}
+            sx={{
+              padding: { xs: 3, sm: 4 },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              width: '100%',
+              borderRadius: 4,
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <Typography 
+              component="h2" 
+              variant="h4" 
+              gutterBottom
+              sx={{ 
+                fontWeight: 600,
+                mb: 3,
+                color: 'text.primary',
+              }}
+            >
+              Hoş Geldiniz
+            </Typography>
+
+            {error && (
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  width: '100%', 
+                  mb: 3,
+                  borderRadius: 2,
+                }}
+              >
+                {error}
+              </Alert>
+            )}
+
+            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="Email Adresi"
+                name="email"
+                autoComplete="email"
+                autoFocus
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Şifre"
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={handleTogglePasswordVisibility}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 3 }}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading}
+                startIcon={<LoginIcon />}
+                sx={{ 
+                  mb: 3,
+                  py: 1.5,
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
+                  },
+                  transition: 'all 0.2s ease-in-out',
+                }}
+              >
+                {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+              </Button>
+            </Box>
+
+            {/* Demo Kullanıcı Bilgileri */}
+            <Card 
+              sx={{ 
+                width: '100%', 
+                mt: 2, 
+                bgcolor: 'grey.50',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                borderRadius: 3,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Typography 
+                  variant="h6" 
+                  gutterBottom
+                  sx={{ 
+                    fontWeight: 600,
+                    color: 'text.primary',
+                    mb: 2,
+                  }}
+                >
+                  🚀 Demo Kullanıcı
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  gutterBottom
+                  sx={{ mb: 2 }}
+                >
+                  Platformu test etmek için aşağıdaki bilgileri kullanabilirsiniz:
+                </Typography>
+                <Box sx={{ mb: 2 }}>
+                  <Typography 
+                    variant="body2" 
+                    component="div"
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      mb: 1,
+                      fontFamily: 'monospace',
+                      bgcolor: 'background.paper',
+                      p: 1,
+                      borderRadius: 1,
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                    }}
+                  >
+                    <strong>Email:</strong> demo@mywisepath.com
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    component="div"
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      fontFamily: 'monospace',
+                      bgcolor: 'background.paper',
+                      p: 1,
+                      borderRadius: 1,
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                    }}
+                  >
+                    <strong>Şifre:</strong> demo123
+                  </Typography>
+                </Box>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleDemoLogin}
+                  sx={{ 
+                    mt: 1,
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    '&:hover': {
+                      borderColor: 'primary.dark',
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                    },
+                  }}
+                >
+                  Demo Bilgilerini Doldur
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Box sx={{ mt: 4, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                Hesabınız yok mu?{' '}
+                <Link 
+                  component={RouterLink} 
+                  to="/register" 
+                  variant="body2"
+                  sx={{ 
+                    fontWeight: 600,
+                    color: 'primary.main',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Kayıt Ol
+                </Link>
+              </Typography>
+            </Box>
+          </Paper>
+        </Fade>
       </Box>
     </Container>
   );

@@ -9,15 +9,20 @@ interface User {
   learning_goals?: string[];
   skill_level?: string;
   interests?: string[];
+  // Email automation preferences
+  email_frequency?: string;
+  weekly_reminders_enabled?: boolean;
+  progress_reports_enabled?: boolean;
+  instant_email_enabled?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  loading: boolean;
+  updateUser: (user: User) => void;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,64 +41,52 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('token');
-      if (storedToken) {
-        try {
-          const userData = await authService.getCurrentUser(storedToken);
+    const token = localStorage.getItem('token');
+    if (token) {
+      authService.getCurrentUser(token)
+        .then(userData => {
           setUser(userData);
-          setToken(storedToken);
-        } catch (error) {
-          console.error('Token validation failed:', error);
+        })
+        .catch(() => {
           localStorage.removeItem('token');
-          setToken(null);
-        }
-      }
-      setLoading(false);
-    };
-
-    initializeAuth();
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await authService.login(email, password);
-      setUser(response);
-      setToken(response.token);
-      localStorage.setItem('token', response.token);
-    } catch (error) {
-      throw error;
-    }
+    const response = await authService.login(email, password);
+    setUser(response);
   };
 
   const register = async (username: string, email: string, password: string) => {
-    try {
-      const response = await authService.register(username, email, password);
-      setUser(response);
-      setToken(response.token);
-      localStorage.setItem('token', response.token);
-    } catch (error) {
-      throw error;
-    }
+    const response = await authService.register(username, email, password);
+    setUser(response);
   };
 
   const logout = () => {
-    setUser(null);
-    setToken(null);
     localStorage.removeItem('token');
+    setUser(null);
   };
 
-  const value: AuthContextType = {
+  const updateUser = (userData: User) => {
+    setUser(userData);
+  };
+
+  const value = {
     user,
-    token,
     login,
     register,
     logout,
-    loading,
+    updateUser,
+    isLoading
   };
 
   return (

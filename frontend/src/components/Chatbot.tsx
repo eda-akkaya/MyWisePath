@@ -1,36 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Box,
   Paper,
   TextField,
-  IconButton,
+  Button,
   Typography,
-  Fab,
-  Collapse,
+  IconButton,
+  Chip,
+  Dialog,
   List,
   ListItem,
-  ListItemText,
-  Avatar,
   CircularProgress,
-  Button,
-  Chip,
-  Card,
-  CardContent,
-  Link,
-  Divider,
+  Fab,
 } from '@mui/material';
 import {
-  Chat as ChatIcon,
-  Send as SendIcon,
-  Close as CloseIcon,
-  SmartToy as BotIcon,
-  School as SchoolIcon,
-  Map as MapIcon,
-  Link as LinkIcon,
-  Search as SearchIcon,
-  TrendingUp as TrendingIcon,
+  Send,
+  Close,
+  Search,
+  TrendingUp,
+  School,
+  Web,
 } from '@mui/icons-material';
-import { chatbotService } from '../services/chatbotService';
+import { chatbotService, SerpContentResult } from '../services/chatbotService';
 
 interface Message {
   id: string;
@@ -41,6 +33,9 @@ interface Message {
   roadmapData?: any;
   hasContentRecommendations?: boolean;
   contentRecommendations?: any[];
+  hasSerpResults?: boolean;
+  serpResults?: SerpContentResult[];
+  extractedConcepts?: string[];
 }
 
 interface ContentRecommendation {
@@ -53,11 +48,7 @@ interface ContentRecommendation {
   description: string;
 }
 
-interface EducationSearchRequest {
-  query: string;
-  skill_level?: string;
-  limit?: number;
-}
+
 
 const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -66,8 +57,12 @@ const Chatbot: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showEducationSearch, setShowEducationSearch] = useState(false);
   const [educationSearchQuery, setEducationSearchQuery] = useState('');
-  const [educationResults, setEducationResults] = useState<ContentRecommendation[]>([]);
+  const [showSerpSearch, setShowSerpSearch] = useState(false);
+  const [serpSearchQuery, setSerpSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Auth context'ten kullanıcı bilgilerini al
+  const { user } = useAuth();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -81,7 +76,7 @@ const Chatbot: React.FC = () => {
     if (isOpen && messages.length === 0) {
       loadWelcomeMessage();
     }
-  }, [isOpen]);
+  }, [isOpen, messages.length]);
 
   const loadWelcomeMessage = async () => {
     try {
@@ -120,11 +115,18 @@ const Chatbot: React.FC = () => {
     setIsLoading(true);
 
     try {
+      // Roadmap bilgileri artık backend'de otomatik olarak kullanılıyor
+      // Kullanıcının roadmap oluşturup oluşturmadığını kontrol et
+      if (!user) {
+        console.log('User not authenticated');
+      }
+      
       const response = await chatbotService.sendMessage(inputMessage);
       
       // Mesajda yol haritası veya içerik önerileri var mı kontrol et
       const hasRoadmap = response.message.includes('yol haritası') || response.message.includes('roadmap');
-      const hasContentRecommendations = response.message.includes('Önerilen eğitim kaynakları');
+      const hasContentRecommendations = response.message.includes('Önerilen eğitim kaynakları') || response.message.includes('Güncel Eğitim Kaynakları');
+      const hasSerpResults = response.message.includes('Güncel Eğitim Kaynakları') || response.message.includes('İlgili Eğitim Kaynakları');
       
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -133,6 +135,7 @@ const Chatbot: React.FC = () => {
         timestamp: new Date(response.timestamp),
         hasRoadmap,
         hasContentRecommendations,
+        hasSerpResults,
       };
       
       setMessages(prev => [...prev, botMessage]);
@@ -203,7 +206,7 @@ const Chatbot: React.FC = () => {
         limit: 5
       });
       
-      setEducationResults(response.results);
+
       
       const searchMessage: Message = {
         id: Date.now().toString(),
@@ -222,6 +225,74 @@ const Chatbot: React.FC = () => {
       const errorMessage: Message = {
         id: Date.now().toString(),
         text: 'Eğitim araması yapılırken bir hata oluştu. Lütfen tekrar deneyin.',
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSerpSearch = async () => {
+    if (!serpSearchQuery.trim()) return;
+    
+    try {
+      setIsLoading(true);
+      const response = await chatbotService.searchWithSerp(serpSearchQuery);
+      
+
+      
+      const searchMessage: Message = {
+        id: Date.now().toString(),
+        text: `"${serpSearchQuery}" için ${response.total_count} güncel eğitim kaynağı buldum:`,
+        isUser: false,
+        timestamp: new Date(response.timestamp),
+        hasSerpResults: true,
+        serpResults: response.results,
+        extractedConcepts: response.extracted_concepts,
+      };
+      
+      setMessages(prev => [...prev, searchMessage]);
+      setShowSerpSearch(false);
+      setSerpSearchQuery('');
+    } catch (error) {
+      console.error('Serp search error:', error);
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: 'Web araması yapılırken bir hata oluştu. Lütfen tekrar deneyin.',
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGetTrendingTopics = async () => {
+    try {
+      setIsLoading(true);
+      const response = await chatbotService.getTrendingEducationalTopics();
+      
+
+      
+      const trendingMessage: Message = {
+        id: Date.now().toString(),
+        text: `Şu anda trend olan ${response.total_count} eğitim konusu:`,
+        isUser: false,
+        timestamp: new Date(response.timestamp),
+        hasSerpResults: true,
+        serpResults: response.trending_topics,
+      };
+      
+      setMessages(prev => [...prev, trendingMessage]);
+
+    } catch (error) {
+      console.error('Trending topics error:', error);
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: 'Trend konular alınırken bir hata oluştu. Lütfen tekrar deneyin.',
         isUser: false,
         timestamp: new Date(),
       };
@@ -267,6 +338,48 @@ const Chatbot: React.FC = () => {
     }
   };
 
+  const renderSerpResults = (message: Message) => {
+    if (!message.hasSerpResults || !message.serpResults) return null;
+
+    return (
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
+          <Web sx={{ mr: 0.5, fontSize: 16 }} />
+          Güncel Eğitim Kaynakları
+        </Typography>
+        {message.extractedConcepts && message.extractedConcepts.length > 0 && (
+          <Box sx={{ mb: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Çıkarılan kavramlar: {message.extractedConcepts.join(', ')}
+            </Typography>
+          </Box>
+        )}
+        {message.serpResults.map((result, index) => (
+          <Paper key={index} sx={{ mb: 1, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
+            <Box sx={{ py: 1, px: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" fontWeight="medium">
+                    {result.title}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {result.platform} • {result.type} • {result.skill_level}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {result.snippet}
+                  </Typography>
+                </Box>
+                <IconButton size="small" color="primary">
+                  <Web fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          </Paper>
+        ))}
+      </Box>
+    );
+  };
+
   const renderContentRecommendations = (message: Message) => {
     if (!message.hasContentRecommendations) return null;
 
@@ -294,12 +407,12 @@ const Chatbot: React.FC = () => {
     return (
       <Box sx={{ mt: 2 }}>
         <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
-          <SchoolIcon sx={{ mr: 0.5, fontSize: 16 }} />
+          <School sx={{ mr: 0.5, fontSize: 16 }} />
           Önerilen Eğitim Kaynakları
         </Typography>
         {recommendations.map((rec, index) => (
-          <Card key={index} sx={{ mb: 1, bgcolor: 'grey.50' }}>
-            <CardContent sx={{ py: 1, px: 2 }}>
+          <Paper key={index} sx={{ mb: 1, bgcolor: 'grey.50' }}>
+            <Box sx={{ py: 1, px: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="body2" fontWeight="medium">
@@ -309,14 +422,12 @@ const Chatbot: React.FC = () => {
                     {rec.platform} • {rec.duration}
                   </Typography>
                 </Box>
-                <Link href={rec.url} target="_blank" rel="noopener">
-                  <IconButton size="small" color="primary">
-                    <LinkIcon fontSize="small" />
-                  </IconButton>
-                </Link>
+                <IconButton size="small" color="primary">
+                  <Web fontSize="small" />
+                </IconButton>
               </Box>
-            </CardContent>
-          </Card>
+            </Box>
+          </Paper>
         ))}
       </Box>
     );
@@ -330,7 +441,7 @@ const Chatbot: React.FC = () => {
         <Button
           variant="contained"
           size="small"
-          startIcon={<MapIcon />}
+          startIcon={<Web />}
           onClick={() => handleGenerateRoadmap(message.text)}
           sx={{ mb: 1 }}
         >
@@ -350,10 +461,10 @@ const Chatbot: React.FC = () => {
     
     return (
       <Box sx={{ mt: 2 }}>
-        <Card sx={{ bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
-          <CardContent>
+        <Paper sx={{ bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
+          <Box sx={{ p: 2 }}>
             <Typography variant="h6" color="primary" gutterBottom>
-              <MapIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+              <Web sx={{ mr: 1, verticalAlign: 'middle' }} />
               {roadmap.title}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -400,8 +511,8 @@ const Chatbot: React.FC = () => {
                 ... ve {roadmap.modules.length - 3} modül daha
               </Typography>
             )}
-          </CardContent>
-        </Card>
+          </Box>
+        </Paper>
       </Box>
     );
   };
@@ -412,7 +523,7 @@ const Chatbot: React.FC = () => {
     return (
       <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
         <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
-          <SearchIcon sx={{ mr: 0.5, fontSize: 16 }} />
+          <Search sx={{ mr: 0.5, fontSize: 16 }} />
           Eğitim Ara
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -430,7 +541,38 @@ const Chatbot: React.FC = () => {
             onClick={handleEducationSearch}
             disabled={!educationSearchQuery.trim() || isLoading}
           >
-            <SearchIcon />
+            <Search />
+          </IconButton>
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderSerpSearch = () => {
+    if (!showSerpSearch) return null;
+
+    return (
+      <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
+        <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
+          <Web sx={{ mr: 0.5, fontSize: 16 }} />
+          Web'de Eğitim Ara
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Web'de aramak istediğiniz konuyu yazın..."
+            value={serpSearchQuery}
+            onChange={(e) => setSerpSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSerpSearch()}
+            disabled={isLoading}
+          />
+          <IconButton
+            color="primary"
+            onClick={handleSerpSearch}
+            disabled={!serpSearchQuery.trim() || isLoading}
+          >
+            <Search />
           </IconButton>
         </Box>
       </Box>
@@ -443,7 +585,7 @@ const Chatbot: React.FC = () => {
         <Button
           variant="outlined"
           size="small"
-          startIcon={<SearchIcon />}
+          startIcon={<Search />}
           onClick={() => setShowEducationSearch(!showEducationSearch)}
         >
           Eğitim Ara
@@ -451,7 +593,24 @@ const Chatbot: React.FC = () => {
         <Button
           variant="outlined"
           size="small"
-          startIcon={<TrendingIcon />}
+          startIcon={<Web />}
+          onClick={() => setShowSerpSearch(!showSerpSearch)}
+        >
+          Web'de Ara
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<TrendingUp />}
+          onClick={handleGetTrendingTopics}
+          disabled={isLoading}
+        >
+          Trend Konular
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<School />}
           onClick={handleGetPopularEducation}
           disabled={isLoading}
         >
@@ -475,14 +634,15 @@ const Chatbot: React.FC = () => {
           zIndex: 1000,
         }}
       >
-        {isOpen ? <CloseIcon /> : <ChatIcon />}
+        {isOpen ? <Close /> : <Web />}
       </Fab>
 
       {/* Chat Window */}
-      <Collapse in={isOpen} timeout="auto" unmountOnExit>
-        <Paper
-          elevation={8}
-          sx={{
+      <Dialog
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        PaperProps={{
+          sx: {
             position: 'fixed',
             bottom: 80,
             right: 16,
@@ -492,154 +652,157 @@ const Chatbot: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
+          },
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            bgcolor: 'primary.main',
+            color: 'white',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
           }}
         >
-          {/* Header */}
-          <Box
-            sx={{
-              bgcolor: 'primary.main',
-              color: 'white',
-              p: 2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <BotIcon />
-            <Typography variant="h6">MyWisePath Asistan</Typography>
-          </Box>
+          <Web />
+                      <Typography variant="h6">Bilge Rehber ✨</Typography>
+        </Box>
 
-          {/* Messages */}
-          <Box
-            sx={{
-              flex: 1,
-              overflow: 'auto',
-              p: 2,
-              bgcolor: 'grey.50',
-            }}
-          >
-            <List sx={{ p: 0 }}>
-              {messages.map((message) => (
-                <ListItem
-                  key={message.id}
+        {/* Messages */}
+        <Box
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+            p: 2,
+            bgcolor: 'grey.50',
+          }}
+        >
+          <List sx={{ p: 0 }}>
+            {messages.map((message) => (
+              <ListItem
+                key={message.id}
+                sx={{
+                  flexDirection: 'column',
+                  alignItems: message.isUser ? 'flex-end' : 'flex-start',
+                  p: 0,
+                  mb: 1,
+                }}
+              >
+                <Box
                   sx={{
-                    flexDirection: 'column',
-                    alignItems: message.isUser ? 'flex-end' : 'flex-start',
-                    p: 0,
-                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1,
+                    maxWidth: '90%',
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 1,
-                      maxWidth: '90%',
-                    }}
-                  >
-                    {!message.isUser && (
-                      <Avatar
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          bgcolor: 'primary.main',
-                        }}
-                      >
-                        <BotIcon fontSize="small" />
-                      </Avatar>
-                    )}
-                    <Paper
-                      sx={{
-                        p: 1.5,
-                        bgcolor: message.isUser ? 'primary.main' : 'white',
-                        color: message.isUser ? 'white' : 'text.primary',
-                        borderRadius: 2,
-                        boxShadow: 1,
-                        maxWidth: '100%',
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {message.text}
-                      </Typography>
-                      
-                      {/* Content Recommendations */}
-                      {renderContentRecommendations(message)}
-                      
-                      {/* Roadmap Suggestion */}
-                      {renderRoadmapSuggestion(message)}
-                      
-                      {/* Roadmap Data */}
-                      {renderRoadmapData(message)}
-                    </Paper>
-                    {message.isUser && (
-                      <Avatar
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          bgcolor: 'secondary.main',
-                        }}
-                      >
-                        <Typography variant="caption">U</Typography>
-                      </Avatar>
-                    )}
-                  </Box>
-                </ListItem>
-              ))}
-              {isLoading && (
-                <ListItem sx={{ justifyContent: 'flex-start', p: 0, mb: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Avatar
+                  {!message.isUser && (
+                    <Chip
                       sx={{
                         width: 32,
                         height: 32,
                         bgcolor: 'primary.main',
                       }}
-                    >
-                      <BotIcon fontSize="small" />
-                    </Avatar>
-                    <CircularProgress size={20} />
-                  </Box>
-                </ListItem>
-              )}
-            </List>
-            <div ref={messagesEndRef} />
-          </Box>
+                      icon={<Web fontSize="small" />}
+                    />
+                  )}
+                  <Paper
+                    sx={{
+                      p: 1.5,
+                      bgcolor: message.isUser ? 'primary.main' : 'white',
+                      color: message.isUser ? 'white' : 'text.primary',
+                      borderRadius: 2,
+                      boxShadow: 1,
+                      maxWidth: '100%',
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                      {message.text}
+                    </Typography>
+                    
+                    {/* Serp Results */}
+                    {renderSerpResults(message)}
+                    
+                    {/* Content Recommendations */}
+                    {renderContentRecommendations(message)}
+                    
+                    {/* Roadmap Suggestion */}
+                    {renderRoadmapSuggestion(message)}
+                    
+                    {/* Roadmap Data */}
+                    {renderRoadmapData(message)}
+                  </Paper>
+                  {message.isUser && (
+                    <Chip
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        bgcolor: 'secondary.main',
+                      }}
+                      icon={<Typography variant="caption">U</Typography>}
+                    />
+                  )}
+                </Box>
+              </ListItem>
+            ))}
+            {isLoading && (
+              <ListItem sx={{ justifyContent: 'flex-start', p: 0, mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Chip
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      bgcolor: 'primary.main',
+                    }}
+                    icon={<Web fontSize="small" />}
+                  />
+                  <CircularProgress size={20} />
+                </Box>
+              </ListItem>
+            )}
+          </List>
+          <div ref={messagesEndRef} />
+        </Box>
 
-          {/* Input */}
-          <Box sx={{ p: 2, bgcolor: 'white' }}>
-            {/* Quick Actions */}
-            {renderQuickActions()}
-            
-            {/* Education Search */}
-            {renderEducationSearch()}
-            
-            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Mesajınızı yazın..."
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                disabled={isLoading}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 3,
-                  },
-                }}
-              />
-              <IconButton
-                color="primary"
-                onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isLoading}
-                sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' } }}
-              >
-                <SendIcon />
-              </IconButton>
-            </Box>
+        {/* Input */}
+        <Box sx={{ p: 2, bgcolor: 'white' }}>
+          {/* Quick Actions */}
+          {renderQuickActions()}
+          
+          {/* Education Search */}
+          {renderEducationSearch()}
+          
+          {/* Serp Search */}
+          {renderSerpSearch()}
+          
+          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Mesajınızı yazın..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              disabled={isLoading}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 3,
+                },
+              }}
+            />
+            <IconButton
+              color="primary"
+              onClick={handleSendMessage}
+              disabled={!inputMessage.trim() || isLoading}
+              sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' } }}
+            >
+              <Send />
+            </IconButton>
           </Box>
-        </Paper>
-      </Collapse>
+        </Box>
+      </Dialog>
     </>
   );
 };

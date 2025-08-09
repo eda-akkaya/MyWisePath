@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Button,
-  Grid,
   Paper,
   TextField,
   FormControl,
@@ -20,6 +19,10 @@ import {
   Step,
   StepLabel,
   Alert,
+  Fade,
+  Grow,
+  IconButton,
+  Divider,
 } from '@mui/material';
 import {
   School,
@@ -27,6 +30,11 @@ import {
   Timeline,
   CheckCircle,
   PlayArrow,
+  AutoAwesome,
+  TrendingUp,
+  Psychology,
+  Schedule,
+  Star,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { roadmapService, RoadmapRequest } from '../services/roadmapService';
@@ -56,9 +64,9 @@ const Roadmap: React.FC = () => {
   const steps = ['Bilgi Seviyesi', 'İlgi Alanları', 'Hedefler', 'Zaman Planı', 'Yol Haritası'];
 
   const skillLevels = [
-    { value: 'beginner', label: 'Başlangıç' },
-    { value: 'intermediate', label: 'Orta' },
-    { value: 'advanced', label: 'İleri' },
+    { value: 'beginner', label: 'Başlangıç', icon: '🌱', description: 'Yeni başlayanlar için' },
+    { value: 'intermediate', label: 'Orta', icon: '🚀', description: 'Temel bilgisi olanlar için' },
+    { value: 'advanced', label: 'İleri', icon: '⚡', description: 'Deneyimli kullanıcılar için' },
   ];
 
   const interestOptions = [
@@ -110,22 +118,19 @@ const Roadmap: React.FC = () => {
   const generateRoadmap = async () => {
     setLoading(true);
     try {
-      // Backend API çağrısı
-      const roadmapRequest: RoadmapRequest = {
+      const request: RoadmapRequest = {
         skill_level: formData.skill_level,
         interests: formData.interests,
         learning_goals: formData.learning_goals,
         available_hours_per_week: formData.available_hours_per_week,
         target_timeline_months: formData.target_timeline_months,
       };
-      
-      const response = await roadmapService.generateRoadmap(roadmapRequest);
+
+      const response = await roadmapService.generateRoadmap(request);
       setRoadmap(response);
-      setActiveStep(4);
+      handleNext();
     } catch (error) {
-      console.error('Roadmap oluşturma hatası:', error);
-      // Hata durumunda kullanıcıya bilgi ver
-      alert('Yol haritası oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+      console.error('Yol haritası oluşturma hatası:', error);
     } finally {
       setLoading(false);
     }
@@ -135,162 +140,227 @@ const Roadmap: React.FC = () => {
     switch (step) {
       case 0:
         return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Mevcut Bilgi Seviyeniz Nedir?
-            </Typography>
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Bilgi Seviyesi</InputLabel>
-              <Select
-                value={formData.skill_level}
-                label="Bilgi Seviyesi"
-                onChange={(e) => setFormData(prev => ({ ...prev, skill_level: e.target.value }))}
-              >
+          <Grow in={true} timeout={800}>
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                📊 Bilgi Seviyenizi Belirleyin
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                Mevcut bilgi seviyenizi seçin, böylece size en uygun yol haritasını oluşturabiliriz.
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
                 {skillLevels.map((level) => (
-                  <MenuItem key={level.value} value={level.value}>
-                    {level.label}
-                  </MenuItem>
+                  <Card
+                    key={level.value}
+                    sx={{
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease-in-out',
+                      border: formData.skill_level === level.value ? '2px solid' : '1px solid',
+                      borderColor: formData.skill_level === level.value ? 'primary.main' : 'grey.300',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                      },
+                    }}
+                    onClick={() => setFormData(prev => ({ ...prev, skill_level: level.value }))}
+                  >
+                    <CardContent sx={{ textAlign: 'center', p: 3 }}>
+                      <Typography variant="h3" sx={{ mb: 1 }}>
+                        {level.icon}
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                        {level.label}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {level.description}
+                      </Typography>
+                    </CardContent>
+                  </Card>
                 ))}
-              </Select>
-            </FormControl>
-          </Box>
+              </Box>
+            </Box>
+          </Grow>
         );
 
       case 1:
         return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Hangi Alanlara İlgi Duyuyorsunuz?
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Birden fazla seçim yapabilirsiniz
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {interestOptions.map((interest) => (
-                <Chip
-                  key={interest}
-                  label={interest}
-                  onClick={() => handleInterestToggle(interest)}
-                  color={formData.interests.includes(interest) ? 'primary' : 'default'}
-                  variant={formData.interests.includes(interest) ? 'filled' : 'outlined'}
-                  clickable
-                />
-              ))}
+          <Grow in={true} timeout={800}>
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                🔥 İlgi Alanlarınızı Seçin
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                Hangi teknoloji alanlarında kendinizi geliştirmek istiyorsunuz?
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                {interestOptions.map((interest) => (
+                  <Chip
+                    key={interest}
+                    label={interest}
+                    onClick={() => handleInterestToggle(interest)}
+                    color={formData.interests.includes(interest) ? 'primary' : 'default'}
+                    variant={formData.interests.includes(interest) ? 'filled' : 'outlined'}
+                    icon={formData.interests.includes(interest) ? <AutoAwesome /> : undefined}
+                    sx={{
+                      fontSize: '1rem',
+                      py: 1,
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
             </Box>
-          </Box>
+          </Grow>
         );
 
       case 2:
         return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Öğrenme Hedefleriniz Nelerdir?
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Birden fazla hedef seçebilirsiniz
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {goalOptions.map((goal) => (
-                <Chip
-                  key={goal}
-                  label={goal}
-                  onClick={() => handleGoalToggle(goal)}
-                  color={formData.learning_goals.includes(goal) ? 'primary' : 'default'}
-                  variant={formData.learning_goals.includes(goal) ? 'filled' : 'outlined'}
-                  clickable
-                />
-              ))}
+          <Grow in={true} timeout={800}>
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                🎯 Öğrenme Hedeflerinizi Belirleyin
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                Bu yolculukta neyi başarmak istiyorsunuz?
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                {goalOptions.map((goal) => (
+                  <Chip
+                    key={goal}
+                    label={goal}
+                    onClick={() => handleGoalToggle(goal)}
+                    color={formData.learning_goals.includes(goal) ? 'secondary' : 'default'}
+                    variant={formData.learning_goals.includes(goal) ? 'filled' : 'outlined'}
+                    icon={formData.learning_goals.includes(goal) ? <Star /> : undefined}
+                    sx={{
+                      fontSize: '1rem',
+                      py: 1,
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
             </Box>
-          </Box>
+          </Grow>
         );
 
       case 3:
         return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Zaman Planınız
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 3 }}>
-              <TextField
-                fullWidth
-                label="Haftalık Ayırabileceğiniz Saat"
-                type="number"
-                value={formData.available_hours_per_week}
-                onChange={(e) => setFormData(prev => ({ ...prev, available_hours_per_week: parseInt(e.target.value) }))}
-                inputProps={{ min: 1, max: 40 }}
-              />
-              <TextField
-                fullWidth
-                label="Hedef Süre (Ay)"
-                type="number"
-                value={formData.target_timeline_months}
-                onChange={(e) => setFormData(prev => ({ ...prev, target_timeline_months: parseInt(e.target.value) }))}
-                inputProps={{ min: 1, max: 24 }}
-              />
+          <Grow in={true} timeout={800}>
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                ⏰ Zaman Planınızı Belirleyin
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                Haftalık ne kadar zaman ayırabilirsiniz ve hedefinize ne kadar sürede ulaşmak istiyorsunuz?
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4 }}>
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                    <Schedule sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    Haftalık Çalışma Saati
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    value={formData.available_hours_per_week}
+                    onChange={(e) => setFormData(prev => ({ 
+                      ...prev, 
+                      available_hours_per_week: parseInt(e.target.value) 
+                    }))}
+                    InputProps={{
+                      endAdornment: <Typography variant="body2">saat/hafta</Typography>,
+                    }}
+                    sx={{ mb: 2 }}
+                  />
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={(formData.available_hours_per_week / 40) * 100}
+                    sx={{ height: 8, borderRadius: 4 }}
+                  />
+                </Box>
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                    <TrendingUp sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    Hedef Süre
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    value={formData.target_timeline_months}
+                    onChange={(e) => setFormData(prev => ({ 
+                      ...prev, 
+                      target_timeline_months: parseInt(e.target.value) 
+                    }))}
+                    InputProps={{
+                      endAdornment: <Typography variant="body2">ay</Typography>,
+                    }}
+                    sx={{ mb: 2 }}
+                  />
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={(formData.target_timeline_months / 24) * 100}
+                    sx={{ height: 8, borderRadius: 4 }}
+                  />
+                </Box>
+              </Box>
             </Box>
-          </Box>
+          </Grow>
         );
 
       case 4:
-        return roadmap ? (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              {roadmap.title}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              {roadmap.description}
-            </Typography>
-            
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Genel İlerleme
+        return (
+          <Grow in={true} timeout={800}>
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                🎉 Yol Haritanız Hazır!
               </Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={roadmap.overall_progress} 
-                sx={{ height: 10, borderRadius: 5 }}
-              />
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                {roadmap.overall_progress}% tamamlandı
-              </Typography>
-            </Box>
-
-            <Typography variant="h6" gutterBottom>
-              Modüller
-            </Typography>
-            {roadmap.modules.map((module: any) => (
-              <Card key={module.id} sx={{ mb: 2 }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography variant="h6">{module.title}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {module.description}
-                      </Typography>
-                      <Box sx={{ mt: 1 }}>
-                        <Chip 
-                          label={module.difficulty} 
-                          size="small" 
-                          color={module.difficulty === 'beginner' ? 'success' : module.difficulty === 'intermediate' ? 'warning' : 'error'}
-                        />
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          Tahmini süre: {module.estimated_hours} saat
-                        </Typography>
-                      </Box>
+              {roadmap && (
+                <Card sx={{ mb: 3, borderRadius: 4 }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                      📋 Özet
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 3 }}>
+                      {roadmap.summary}
+                    </Typography>
+                    <Divider sx={{ my: 3 }} />
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                      🗓️ Aşamalar
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {roadmap.phases?.map((phase: any, index: number) => (
+                        <Paper key={index} sx={{ p: 3, borderRadius: 3 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                            Aşama {index + 1}: {phase.title}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            {phase.description}
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {phase.topics?.map((topic: string, topicIndex: number) => (
+                              <Chip
+                                key={topicIndex}
+                                label={topic}
+                                size="small"
+                                variant="outlined"
+                                icon={<CheckCircle />}
+                              />
+                            ))}
+                          </Box>
+                        </Paper>
+                      ))}
                     </Box>
-                    <Button
-                      variant="contained"
-                      startIcon={module.completed ? <CheckCircle /> : <PlayArrow />}
-                      disabled={module.completed}
-                    >
-                      {module.completed ? 'Tamamlandı' : 'Başla'}
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-        ) : null;
+                  </CardContent>
+                </Card>
+              )}
+            </Box>
+          </Grow>
+        );
 
       default:
         return null;
@@ -298,66 +368,124 @@ const Roadmap: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={() => navigate('/dashboard')}
-          sx={{ mr: 2 }}
-        >
-          Geri
-        </Button>
-        <School sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
-        <Typography variant="h4">
-          Yol Haritası Oluştur
-        </Typography>
-      </Box>
+    <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
+      {/* Page Title */}
+      <Fade in={true} timeout={800}>
+        <Box sx={{ 
+          mb: 4,
+          p: 3,
+          borderRadius: 4,
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Timeline sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              Yol Haritası Oluştur
+            </Typography>
+          </Box>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+            Kişiselleştirilmiş öğrenme yolculuğunuzu planlayın
+          </Typography>
+        </Box>
+      </Fade>
 
       {/* Stepper */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 4 }}>
+        <Stepper activeStep={activeStep} alternativeLabel>
           {steps.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
             </Step>
           ))}
         </Stepper>
+      </Paper>
 
-        {/* Step Content */}
-        <Box sx={{ minHeight: 300 }}>
-          {renderStepContent(activeStep)}
-        </Box>
+      {/* Content */}
+      <Paper sx={{ 
+        p: 4, 
+        borderRadius: 4,
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(0, 0, 0, 0.08)',
+      }}>
+        {renderStepContent(activeStep)}
 
-        {/* Navigation Buttons */}
+        {/* Navigation */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
           <Button
             disabled={activeStep === 0}
             onClick={handleBack}
+            startIcon={<ArrowBack />}
+            variant="outlined"
+            sx={{
+              borderColor: 'primary.main',
+              color: 'primary.main',
+              '&:hover': {
+                borderColor: 'primary.dark',
+                backgroundColor: 'primary.main',
+                color: 'white',
+              },
+            }}
           >
             Geri
           </Button>
-          
-          {activeStep === steps.length - 2 ? (
-            <Button
-              variant="contained"
-              onClick={generateRoadmap}
-              disabled={loading}
-            >
-              {loading ? 'Oluşturuluyor...' : 'Yol Haritası Oluştur'}
-            </Button>
-          ) : activeStep < steps.length - 1 ? (
-            <Button
-              variant="contained"
-              onClick={handleNext}
-              disabled={
-                (activeStep === 1 && formData.interests.length === 0) ||
-                (activeStep === 2 && formData.learning_goals.length === 0)
-              }
-            >
-              İleri
-            </Button>
-          ) : null}
+          <Box>
+            {activeStep === steps.length - 2 ? (
+              <Button
+                variant="contained"
+                onClick={generateRoadmap}
+                disabled={loading}
+                startIcon={<AutoAwesome />}
+                size="large"
+                sx={{
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
+                  },
+                }}
+              >
+                {loading ? 'Oluşturuluyor...' : 'Yol Haritası Oluştur'}
+              </Button>
+            ) : activeStep === steps.length - 1 ? (
+              <Button
+                variant="contained"
+                onClick={() => navigate('/dashboard')}
+                startIcon={<PlayArrow />}
+                size="large"
+                sx={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)',
+                  },
+                }}
+              >
+                Başla
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                onClick={handleNext}
+                endIcon={<PlayArrow />}
+                size="large"
+                sx={{
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
+                  },
+                }}
+              >
+                İleri
+              </Button>
+            )}
+          </Box>
         </Box>
       </Paper>
     </Container>

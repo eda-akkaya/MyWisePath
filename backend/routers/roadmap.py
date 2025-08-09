@@ -55,14 +55,25 @@ def generate_ai_roadmap(interests: List[str], skill_level: str, learning_goals: 
         response = ai_service.model.generate_content(prompt)
         response_text = response.text.strip()
         
+        print(f"AI Response: {response_text}")
+        
         # JSON'u parse et
         import re
         json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
         if json_match:
-            roadmap_data = json.loads(json_match.group())
-            return roadmap_data
+            try:
+                roadmap_data = json.loads(json_match.group())
+                # Gerekli alanları kontrol et
+                if "title" not in roadmap_data or "description" not in roadmap_data or "modules" not in roadmap_data:
+                    print("JSON'da gerekli alanlar eksik, fallback kullanılıyor")
+                    return get_fallback_roadmap(interests, skill_level)
+                return roadmap_data
+            except json.JSONDecodeError as e:
+                print(f"JSON parse error: {e}")
+                return get_fallback_roadmap(interests, skill_level)
         else:
-            raise ValueError("JSON bulunamadı")
+            print("JSON bulunamadı, fallback kullanılıyor")
+            return get_fallback_roadmap(interests, skill_level)
             
     except Exception as e:
         print(f"AI roadmap generation error: {e}")
@@ -386,6 +397,18 @@ async def generate_roadmap(
         overall_progress=0
     )
     
+    # Chatbot cache'ine kullanıcı bilgilerini kaydet
+    from routers.chatbot import roadmap_cache
+    roadmap_cache[user_id] = {
+        "skill_level": request.skill_level,
+        "interests": request.interests,
+        "learning_goals": request.learning_goals,
+        "available_hours_per_week": request.available_hours_per_week,
+        "target_timeline_months": request.target_timeline_months,
+        "roadmap_id": roadmap.id,
+        "roadmap_title": roadmap.title
+    }
+    
     return roadmap
 
 @router.post("/generate-from-chat")
@@ -401,8 +424,11 @@ async def generate_roadmap_from_chat(
         if payload is None:
             raise HTTPException(status_code=401, detail="Geçersiz token")
         
+        print(f"Processing roadmap request for message: {user_message}")
+        
         # Kullanıcı mesajını analiz et
         analysis = ai_service.analyze_learning_request(user_message)
+        print(f"Analysis result: {analysis}")
         
         if not analysis.get("has_learning_request", False):
             raise HTTPException(status_code=400, detail="Öğrenme isteği tespit edilemedi")
@@ -415,6 +441,8 @@ async def generate_roadmap_from_chat(
             available_hours_per_week=10,  # varsayılan
             target_timeline_months=analysis.get("timeline_months", 6)
         )
+        
+        print(f"Roadmap request: {roadmap_request}")
         
         # Roadmap oluştur
         roadmap = await generate_roadmap(roadmap_request, credentials)
@@ -429,6 +457,8 @@ async def generate_roadmap_from_chat(
         raise
     except Exception as e:
         print(f"Error generating roadmap from chat: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail="Yol haritası oluşturulurken bir hata oluştu")
 
 @router.get("/content-recommendations/{topic}")

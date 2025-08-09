@@ -7,11 +7,11 @@ Bu dosya e-posta servislerini doğrudan test eder.
 import sys
 import os
 
-# Backend klasörünü Python path'ine ekle
-sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
+# Services klasörünü Python path'ine ekle
+sys.path.append(os.path.join(os.path.dirname(__file__), 'services'))
 
-from services.automation_service import automation_service
-from services.email_service import email_service
+from automation_service import automation_service
+from email_service import email_service
 
 def test_email_service():
     """E-posta servisini test et"""

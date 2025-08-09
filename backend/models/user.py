@@ -1,6 +1,13 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
+from enum import Enum
+
+class EmailFrequency(str, Enum):
+    NEVER = "never"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
 
 class UserBase(BaseModel):
     username: str
@@ -21,6 +28,21 @@ class UserProfile(BaseModel):
     learning_goals: Optional[List[str]] = []
     skill_level: Optional[str] = "beginner"
     interests: Optional[List[str]] = []
+    # Email automation preferences
+    email_frequency: Optional[EmailFrequency] = EmailFrequency.WEEKLY
+    weekly_reminders_enabled: Optional[bool] = True
+    progress_reports_enabled: Optional[bool] = True
+    instant_email_enabled: Optional[bool] = True
+
+class UserProfileUpdate(BaseModel):
+    skill_level: Optional[str] = None
+    interests: Optional[List[str]] = None
+    learning_goals: Optional[List[str]] = None
+    # Email automation preferences
+    email_frequency: Optional[EmailFrequency] = None
+    weekly_reminders_enabled: Optional[bool] = None
+    progress_reports_enabled: Optional[bool] = None
+    instant_email_enabled: Optional[bool] = None
 
 class UserResponse(BaseModel):
     id: str

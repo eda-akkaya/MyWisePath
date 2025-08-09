@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from typing import Optional
+from fastapi import HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 # JWT ayarları
 from config import JWT_SECRET_KEY, JWT_ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -36,4 +38,29 @@ def verify_token(token: str) -> Optional[dict]:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except JWTError:
-        return None 
+        return None
+
+# HTTP Bearer token security
+security = HTTPBearer()
+
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Mevcut kullanıcıyı getir"""
+    token = credentials.credentials
+    payload = verify_token(token)
+    
+    if payload is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Geçersiz token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    user_id: str = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Token'da kullanıcı ID'si bulunamadı",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return {"id": user_id, "username": payload.get("username", ""), "email": payload.get("email", "")} 

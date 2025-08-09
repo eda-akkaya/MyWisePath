@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import timedelta
-from typing import Optional
+from typing import Optional, List
+from pydantic import BaseModel
 
-from models.user import UserCreate, UserLogin, UserResponse, Token, UserProfile
+from models.user import UserCreate, UserLogin, UserResponse, Token, UserProfile, UserProfileUpdate, EmailFrequency
 from utils.auth import create_access_token, verify_password, ACCESS_TOKEN_EXPIRE_MINUTES
 from utils.constants import DUMMY_USER
 
@@ -19,7 +20,12 @@ DUMMY_USERS = {
         "password": "demo123",  # Gerçek uygulamada hash'lenmiş olacak
         "learning_goals": ["Veri Bilimi", "Python Programlama"],
         "skill_level": "beginner",
-        "interests": ["AI", "Machine Learning", "Data Analysis"]
+        "interests": ["AI", "Machine Learning", "Data Analysis"],
+        # Email automation preferences
+        "email_frequency": EmailFrequency.WEEKLY,
+        "weekly_reminders_enabled": True,
+        "progress_reports_enabled": True,
+        "instant_email_enabled": True
     }
 }
 
@@ -38,7 +44,12 @@ async def register(user: UserCreate):
         "password": user.password,
         "learning_goals": [],
         "skill_level": "beginner",
-        "interests": []
+        "interests": [],
+        # Default email settings
+        "email_frequency": EmailFrequency.WEEKLY,
+        "weekly_reminders_enabled": True,
+        "progress_reports_enabled": True,
+        "instant_email_enabled": True
     }
     
     # Token oluştur
@@ -100,5 +111,65 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         created_at=DUMMY_USER["created_at"],
         learning_goals=user["learning_goals"],
         skill_level=user["skill_level"],
-        interests=user["interests"]
+        interests=user["interests"],
+        email_frequency=user.get("email_frequency", EmailFrequency.WEEKLY),
+        weekly_reminders_enabled=user.get("weekly_reminders_enabled", True),
+        progress_reports_enabled=user.get("progress_reports_enabled", True),
+        instant_email_enabled=user.get("instant_email_enabled", True)
+    )
+
+@router.put("/profile", response_model=UserProfile)
+async def update_user_profile(
+    profile_update: UserProfileUpdate,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Kullanıcı profil bilgilerini güncelle"""
+    token = credentials.credentials
+    from utils.auth import verify_token
+    
+    payload = verify_token(token)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Geçersiz token")
+    
+    email = payload.get("sub")
+    if email not in DUMMY_USERS:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    
+    user = DUMMY_USERS[email]
+    
+    # Profil bilgilerini güncelle
+    if profile_update.skill_level is not None:
+        user["skill_level"] = profile_update.skill_level
+    
+    if profile_update.interests is not None:
+        user["interests"] = profile_update.interests
+    
+    if profile_update.learning_goals is not None:
+        user["learning_goals"] = profile_update.learning_goals
+    
+    # Email automation preferences
+    if profile_update.email_frequency is not None:
+        user["email_frequency"] = profile_update.email_frequency
+    
+    if profile_update.weekly_reminders_enabled is not None:
+        user["weekly_reminders_enabled"] = profile_update.weekly_reminders_enabled
+    
+    if profile_update.progress_reports_enabled is not None:
+        user["progress_reports_enabled"] = profile_update.progress_reports_enabled
+    
+    if profile_update.instant_email_enabled is not None:
+        user["instant_email_enabled"] = profile_update.instant_email_enabled
+    
+    return UserProfile(
+        id=user["id"],
+        username=user["username"],
+        email=user["email"],
+        created_at=DUMMY_USER["created_at"],
+        learning_goals=user["learning_goals"],
+        skill_level=user["skill_level"],
+        interests=user["interests"],
+        email_frequency=user.get("email_frequency", EmailFrequency.WEEKLY),
+        weekly_reminders_enabled=user.get("weekly_reminders_enabled", True),
+        progress_reports_enabled=user.get("progress_reports_enabled", True),
+        instant_email_enabled=user.get("instant_email_enabled", True)
     ) 

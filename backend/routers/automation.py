@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from services.automation_service import automation_service
 from services.email_service import email_service
+from models.user import EmailFrequency, UserProfileUpdate
+from utils.auth import get_current_user
 
 router = APIRouter(prefix="/api/v1/automation", tags=["Automation"])
 
@@ -23,6 +25,16 @@ class AutomationStatus(BaseModel):
     is_running: bool
     scheduled_jobs: List[Dict[str, Any]]
     total_users: int
+
+class EmailSettings(BaseModel):
+    email_frequency: EmailFrequency
+    weekly_reminders_enabled: bool
+    progress_reports_enabled: bool
+    instant_email_enabled: bool
+
+class InstantEmailRequest(BaseModel):
+    email_type: str = "reminder"  # "reminder" veya "progress"
+    custom_message: Optional[str] = None
 
 @router.post("/start")
 async def start_automation():
@@ -159,6 +171,103 @@ async def remove_user(email: str):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Kullanıcı kaldırılamadı: {str(e)}")
+
+@router.get("/email-settings")
+async def get_email_settings(current_user: dict = Depends(get_current_user)):
+    """
+    Kullanıcının e-posta ayarlarını getir
+    """
+    try:
+        # Gerçek uygulamada veritabanından alınacak
+        # Şimdilik default değerler döndürüyoruz
+        return EmailSettings(
+            email_frequency=EmailFrequency.WEEKLY,
+            weekly_reminders_enabled=True,
+            progress_reports_enabled=True,
+            instant_email_enabled=True
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"E-posta ayarları getirilemedi: {str(e)}")
+
+@router.put("/email-settings")
+async def update_email_settings(
+    settings: EmailSettings,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Kullanıcının e-posta ayarlarını güncelle
+    """
+    try:
+        # Gerçek uygulamada veritabanına kaydedilecek
+        return {
+            "message": "E-posta ayarları başarıyla güncellendi",
+            "settings": settings,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"E-posta ayarları güncellenemedi: {str(e)}")
+
+@router.post("/send-instant-email")
+async def send_instant_email(
+    request: InstantEmailRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Anında e-posta gönder
+    """
+    try:
+        user_email = current_user.get("email")
+        username = current_user.get("username", "Kullanıcı")
+        
+        if not user_email:
+            raise HTTPException(status_code=400, detail="Kullanıcı e-posta adresi bulunamadı")
+        
+        # Kullanıcının e-posta ayarlarını kontrol et
+        # Gerçek uygulamada veritabanından alınacak
+        instant_email_enabled = True  # Default değer
+        
+        if not instant_email_enabled:
+            raise HTTPException(status_code=400, detail="Anında e-posta gönderimi devre dışı")
+        
+        success = False
+        if request.email_type == "reminder":
+            # Default learning goals if not available
+            learning_goals = current_user.get("learning_goals", ["Öğrenme", "Gelişim"])
+            if not learning_goals:
+                learning_goals = ["Öğrenme", "Gelişim"]
+                
+            success = email_service.send_weekly_reminder(
+                user_email=user_email,
+                username=username,
+                learning_goals=learning_goals
+            )
+        elif request.email_type == "progress":
+            progress_data = {
+                "completed_topics": ["Örnek Konu", "Temel Bilgiler"],
+                "current_streak": 1,
+                "total_study_time": 10,
+                "next_goals": ["Hedef", "Gelişim"]
+            }
+            success = email_service.send_progress_report(
+                user_email=user_email,
+                username=username,
+                progress_data=progress_data
+            )
+        else:
+            raise HTTPException(status_code=400, detail="Geçersiz e-posta türü")
+        
+        if success:
+            return {
+                "message": f"Anında e-posta başarıyla gönderildi: {user_email}",
+                "email_type": request.email_type,
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            raise HTTPException(status_code=500, detail="E-posta gönderilemedi")
+            
+    except Exception as e:
+        print(f"Anında e-posta hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Anında e-posta hatası: {str(e)}")
 
 @router.post("/schedule/custom")
 async def schedule_custom_job(

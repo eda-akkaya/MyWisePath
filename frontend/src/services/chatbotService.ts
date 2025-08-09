@@ -119,6 +119,41 @@ export interface DynamicRoadmapResponse {
   live_generated: boolean;
 }
 
+// Serp AI interfaces
+export interface SerpSearchResponse {
+  query: string;
+  extracted_concepts: string[];
+  results: SerpContentResult[];
+  total_count: number;
+  timestamp: string;
+  serp_ai_generated: boolean;
+}
+
+export interface SerpContentResult {
+  title: string;
+  url: string;
+  snippet: string;
+  platform: string;
+  type: string;
+  skill_level: string;
+  source: string;
+}
+
+export interface TrendingTopicsResponse {
+  trending_topics: SerpContentResult[];
+  total_count: number;
+  timestamp: string;
+  serp_ai_generated: boolean;
+}
+
+export interface ConceptExtractionResponse {
+  message: string;
+  extracted_concepts: string[];
+  concept_count: number;
+  timestamp: string;
+  serp_ai_extracted: boolean;
+}
+
 class ChatbotService {
   async sendMessage(message: string): Promise<ChatResponse> {
     try {
@@ -243,6 +278,53 @@ class ChatbotService {
         throw new Error(`${statusCode}: ${detail}`);
       }
       throw new Error('500: Dinamik roadmap oluşturulamadı');
+    }
+  }
+
+  // Serp AI methods
+  async searchWithSerp(message: string): Promise<SerpSearchResponse> {
+    try {
+      const response = await api.post<SerpSearchResponse>('/api/v1/chatbot/search-with-serp', {
+        message,
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
+        const detail = error.response?.data?.detail || 'Serp AI araması yapılamadı';
+        throw new Error(`${statusCode}: ${detail}`);
+      }
+      throw new Error('500: Serp AI araması yapılamadı');
+    }
+  }
+
+  async getTrendingEducationalTopics(): Promise<TrendingTopicsResponse> {
+    try {
+      const response = await api.get<TrendingTopicsResponse>('/api/v1/chatbot/trending-educational-topics');
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
+        const detail = error.response?.data?.detail || 'Trend konular alınamadı';
+        throw new Error(`${statusCode}: ${detail}`);
+      }
+      throw new Error('500: Trend konular alınamadı');
+    }
+  }
+
+  async extractLearningConcepts(message: string): Promise<ConceptExtractionResponse> {
+    try {
+      const response = await api.post<ConceptExtractionResponse>('/api/v1/chatbot/extract-concepts', {
+        message,
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
+        const detail = error.response?.data?.detail || 'Kavram çıkarma yapılamadı';
+        throw new Error(`${statusCode}: ${detail}`);
+      }
+      throw new Error('500: Kavram çıkarma yapılamadı');
     }
   }
 }

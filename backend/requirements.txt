@@ -10,4 +10,5 @@ schedule
 aiohttp
 beautifulsoup4
 requests
-asyncio 
+asyncio
+google-search-results 

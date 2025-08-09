@@ -5,7 +5,7 @@ import uvicorn
 from datetime import datetime
 
 # Router'ları import et
-from routers import auth, roadmap, chatbot, automation
+from routers import auth, roadmap, chatbot, automation, learning_environment
 
 app = FastAPI(
     title="MyWisePath API",
@@ -27,6 +27,7 @@ app.include_router(auth.router)
 app.include_router(roadmap.router)
 app.include_router(chatbot.router)
 app.include_router(automation.router)
+app.include_router(learning_environment.router)
 
 @app.get("/")
 async def root():

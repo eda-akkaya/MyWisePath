@@ -11,6 +11,9 @@ except Exception as e:
 # Gemini API Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+# Serp AI API Configuration
+SERP_API_KEY = os.getenv("SERP_API_KEY")
+
 # JWT Configuration
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "mywisepath-secret-key-2024")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")

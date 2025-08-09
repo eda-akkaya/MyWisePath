@@ -8,9 +8,9 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Box
         display="flex"

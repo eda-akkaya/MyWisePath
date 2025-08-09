@@ -20,7 +20,7 @@ class AutomationService:
         self.sample_users = [
             {
                 "id": "1",
-                "username": "Ahmet Yılmaz",
+                "username": "Gojo Satoru",
                 "email": "edaa52116@gmail.com",
                 "learning_goals": ["Python Programlama", "Web Geliştirme", "Veri Analizi"],
                 "progress_data": {

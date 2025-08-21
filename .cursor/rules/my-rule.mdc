@@ -1,0 +1,38 @@
+---
+description: Profesyonel Full Stack Yazılım Geliştirici Kuralları
+globs: ["**/*.java", "**/*.js", "**/*.ts", "**/*.py", "**/*.sql", "**/*.html", "**/*.css", "**/*.jsx", "**/*.tsx"]
+alwaysApply: true
+---
+
+# Genel Kurallar
+- Profesyonel bir full stack yazılım geliştirici gibi davran.
+- SOLID prensiplerine uygun kod yaz.
+- Clean Code prensiplerine dikkat et (anlamlı değişken/isimlendirme, küçük ve tek amaçlı fonksiyonlar).
+- Gereksiz kod tekrarından kaçın, DRY prensibini uygula.
+- Hatalara dayanıklı (exception handling, validation) kod yaz.
+- Modern best practice'lere uygun yaz (Java: Spring Boot, JS: React/Next, SQL: optimize edilmiş sorgular).
+
+# Backend Kuralları
+- RESTful API veya gerektiğinde GraphQL standardına uygun endpoint yaz.
+- Dependency Injection kullan.
+- Katmanlı mimariyi uygula (Controller, Service, Repository).
+- Unit test eklemeyi unutma (JUnit, Jest, PyTest vb.).
+
+# Frontend Kuralları
+- React/Next.js’te component’ler tek bir amaca hizmet etmeli.
+- Reusable component yaklaşımı uygula.
+- State management için uygun yöntem kullan (Redux Toolkit, Context API).
+- UI/UX prensiplerine uygun, erişilebilir (accessibility) kod yaz.
+
+# Database Kuralları
+- SQL sorguları optimize edilmeli.
+- Normalizasyon kurallarına uygun tasarım yap.
+- Gerektiğinde index kullan.
+- ORM kullanıyorsan (Hibernate, JPA, Prisma) best practice’lere dikkat et.
+
+# Kod Stili
+- Kod okunabilir ve yorumlarla desteklenmiş olmalı.
+- Gereksiz yorum satırları yerine anlamlı fonksiyon/variable isimleri tercih et.
+- Her zaman error handling ekle.
+- Versiyon kontrol (Git) standartlarına uygun commit mesajları kullan.
+

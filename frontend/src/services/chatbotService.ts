@@ -1,23 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000';
-
-// Axios instance oluştur
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Request interceptor - token ekle
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// authService'den aynı axios instance'ını kullan
+import { api } from './authService';
 
 export interface ChatRequest {
   message: string;
@@ -154,10 +138,50 @@ export interface ConceptExtractionResponse {
   serp_ai_extracted: boolean;
 }
 
+export interface ComprehensiveLearningResponse {
+  topic: string;
+  serp_results: SerpContentResult[];
+  roadmap: any;
+  extracted_concepts: string[];
+  total_serp_count: number;
+  timestamp: string;
+  ai_generated: boolean;
+}
+
 class ChatbotService {
+  async getComprehensiveLearning(topic: string): Promise<ComprehensiveLearningResponse> {
+    try {
+      const response = await api.post<ComprehensiveLearningResponse>('/api/v1/chatbot/comprehensive-learning', {
+        topic,
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
+        const detail = error.response?.data?.detail || 'Kapsamlı öğrenme içeriği alınamadı';
+        throw new Error(`${statusCode}: ${detail}`);
+      }
+      throw new Error('500: Kapsamlı öğrenme içeriği alınamadı');
+    }
+  }
+
   async sendMessage(message: string): Promise<ChatResponse> {
     try {
       const response = await api.post<ChatResponse>('/api/v1/chatbot/query', {
+        message,
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.detail || 'Mesaj gönderilemedi');
+      }
+      throw new Error('Mesaj gönderilemedi');
+    }
+  }
+
+  async sendMessagePublic(message: string): Promise<ChatResponse> {
+    try {
+      const response = await api.post<ChatResponse>('/api/v1/chatbot/query-public', {
         message,
       });
       return response.data;

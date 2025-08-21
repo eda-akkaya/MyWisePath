@@ -1,8 +1,8 @@
-# MyWisePath E-posta Otomasyonu Test Raporu
+# MyWisePath E-posta Otomasyonu ve Agent Mimarisi Test Raporu
 
 ## 📋 Test Genel Bakış
 
-Bu doküman, MyWisePath platformunun e-posta otomasyonu özelliklerinin test edilme sürecini ve sonuçlarını detaylandırır.
+Bu doküman, MyWisePath platformunun e-posta otomasyonu ve yeni eklenen **Agent Mimarisi** özelliklerinin test edilme sürecini ve sonuçlarını detaylandırır.
 
 ## 🎯 Test Hedefleri
 
@@ -10,6 +10,9 @@ Bu doküman, MyWisePath platformunun e-posta otomasyonu özelliklerinin test edi
 2. **Otomasyon Servisi Testi**: Zamanlanmış e-posta gönderimlerinin çalışması
 3. **Scheduler Testi**: Otomatik e-posta gönderim zamanlamasının doğru çalışması
 4. **SMTP Bağlantı Testi**: Gerçek e-posta gönderiminin çalışması
+5. **Agent Mimarisi Testi**: AI-powered learning agents'ların çalışması
+6. **RoadmapAgent Testi**: Kişiselleştirilmiş öğrenme yol haritaları oluşturma
+7. **Agent Manager Testi**: Agent koordinasyonu ve task yönetimi
 
 ## 🛠️ Test Ortamı
 
@@ -86,6 +89,9 @@ E-posta başarıyla gönderildi: your_email@gmail.com
 | Scheduler | ✅ Başarılı | 100% |
 | SMTP Bağlantısı | ✅ Başarılı | 100% |
 | API Endpoints | ✅ Başarılı | 100% |
+| **Agent Mimarisi** | ✅ **Başarılı** | **100%** |
+| **RoadmapAgent** | ✅ **Başarılı** | **100%** |
+| **Agent Manager** | ✅ **Başarılı** | **100%** |
 
 ## 📧 E-posta Şablonları
 
@@ -225,3 +231,149 @@ E-posta otomasyonu ile ilgili sorunlar için:
 <img width="1119" height="678" alt="Ekran görüntüsü 2025-08-04 003236" src="https://github.com/user-attachments/assets/d39cbae1-8edd-44d0-92eb-a8b1e875d4d1" />
 
 <img width="1100" height="659" alt="Ekran görüntüsü 2025-08-04 003247" src="https://github.com/user-attachments/assets/557c1766-717f-4e29-b54d-b08643aca7e5" />
+
+---
+
+# 🤖 Agent Mimarisi
+
+## Genel Bakış
+
+MyWisePath platformuna **AI-powered Agent Mimarisi** eklenmiştir. Bu sistem, kullanıcıların öğrenme süreçlerini otomatik olarak yönetir ve kişiselleştirilmiş öneriler sunar.
+
+## 🏗️ Mimari Yapı
+
+```
+backend/agents/
+├── __init__.py              # Agent package
+├── base_agent.py            # Temel agent sınıfı
+├── roadmap_agent.py         # Roadmap oluşturma agent'ı
+└── agent_manager.py         # Agent koordinatörü
+```
+
+## 🚀 RoadmapAgent Özellikleri
+
+- **AI-Powered Roadmap Generation**: Gemini AI kullanarak kişiselleştirilmiş öğrenme yol haritaları
+- **Template-Based Fallback**: AI çalışmadığında önceden tanımlanmış şablonlar
+- **Smart Task Handling**: `create_roadmap`, `analyze_roadmap`, `suggest_roadmap` task'ları
+- **Memory Management**: Agent'ın önceki işlemlerini hatırlama
+- **Tool Integration**: AI servisleri ve diğer araçlarla entegrasyon
+
+## 🤖 Agent Manager
+
+- **Agent Registration**: Yeni agent'ları sisteme kaydetme
+- **Task Routing**: Task'ları uygun agent'a yönlendirme
+- **Performance Tracking**: Agent performans metriklerini takip etme
+- **Batch Execution**: Birden fazla task'ı paralel çalıştırma
+
+## 🧪 Agent Test Senaryoları
+
+### Test 1: RoadmapAgent Temel Testi
+```python
+# Python roadmap oluşturma
+python_task = {
+    "type": "create_roadmap",
+    "user_info": {
+        "interests": ["Python", "programlama"],
+        "skill_level": "beginner",
+        "learning_goals": ["Python temellerini öğrenmek"],
+        "available_hours_per_week": 15,
+        "target_timeline_months": 6
+    }
+}
+
+result = await roadmap_agent.execute_task(python_task)
+```
+
+### Test 2: Agent Manager Testi
+```python
+# Sistem durumu kontrolü
+system_status = agent_manager.get_system_status()
+
+# Task çalıştırma
+result = await agent_manager.execute_task(task)
+```
+
+### Test 3: Toplu Task Çalıştırma
+```python
+# Birden fazla roadmap oluşturma
+batch_tasks = [
+    {"type": "create_roadmap", "user_info": {...}},
+    {"type": "create_roadmap", "user_info": {...}}
+]
+
+results = await agent_manager.execute_batch_tasks(batch_tasks)
+```
+
+## 📊 Agent API Endpoints
+
+```
+GET    /api/v1/agents/status              # Tüm agent durumları
+GET    /api/v1/agents/{name}/status       # Belirli agent durumu
+POST   /api/v1/agents/execute             # Task çalıştırma
+POST   /api/v1/agents/execute-batch       # Toplu task çalıştırma
+POST   /api/v1/agents/roadmap/create      # Roadmap oluşturma
+POST   /api/v1/agents/roadmap/analyze     # Roadmap analizi
+POST   /api/v1/agents/roadmap/suggest     # Roadmap önerileri
+GET    /api/v1/agents/roadmap/{id}        # Belirli roadmap
+GET    /api/v1/agents/roadmap             # Tüm roadmap'ler
+DELETE /api/v1/agents/roadmap/{id}        # Roadmap silme
+POST   /api/v1/agents/start               # Agent manager başlatma
+POST   /api/v1/agents/stop                # Agent manager durdurma
+GET    /api/v1/agents/system/status       # Sistem durumu
+```
+
+## 🔧 Agent Kurulumu
+
+### 1. Backend'e Agent Router Ekleme
+```python
+# backend/main.py
+from routers import agents
+
+app.include_router(agents.router)
+```
+
+### 2. Agent Testi
+```bash
+# Agent sistemini test et
+python test_roadmap_agent.py
+```
+
+### 3. API Testi
+```bash
+# Agent API'lerini test et
+curl -X GET "http://localhost:8001/api/v1/agents/status"
+```
+
+## 📈 Agent Performans Metrikleri
+
+- **Task Execution Count**: Çalıştırılan task sayısı
+- **Success Rate**: Başarı oranı
+- **Average Execution Time**: Ortalama çalışma süresi
+- **Memory Usage**: Bellek kullanımı
+- **Tool Count**: Kullanılan araç sayısı
+
+## 🚀 Gelecek Geliştirmeler
+
+1. **ContentAgent**: Eğitim içerik yönetimi
+2. **UserAgent**: Kullanıcı profil analizi
+3. **CommunicationAgent**: E-posta ve bildirim yönetimi
+4. **Multi-Agent Coordination**: Agent'lar arası işbirliği
+5. **Advanced Planning Engine**: Gelişmiş planlama motoru
+6. **Agent Learning**: Agent'ların kendini geliştirmesi
+
+## 🎯 Test Sonuçları
+
+| Agent Bileşeni | Durum | Başarı Oranı |
+|----------------|-------|--------------|
+| BaseAgent | ✅ Başarılı | 100% |
+| RoadmapAgent | ✅ Başarılı | 100% |
+| AgentManager | ✅ Başarılı | 100% |
+| Agent Router | ✅ Başarılı | 100% |
+
+## 📝 Notlar
+
+- Agent sistemi **asenkron** olarak çalışır
+- **Fallback mekanizması** ile güvenilirlik sağlanır
+- **Memory management** ile agent'lar önceki işlemleri hatırlar
+- **Tool integration** ile mevcut servislerle entegrasyon
+- **Performance tracking** ile sürekli iyileştirme

@@ -123,6 +123,35 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         instant_email_enabled=user.get("instant_email_enabled", True)
     )
 
+@router.get("/profile", response_model=UserProfile)
+async def get_user_profile(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Kullanıcı profil bilgilerini getir (me endpoint'i ile aynı)"""
+    token = credentials.credentials
+    from utils.auth import verify_token
+    
+    payload = verify_token(token)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Geçersiz token")
+    
+    email = payload.get("sub")
+    if email not in DUMMY_USERS:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    
+    user = DUMMY_USERS[email]
+    return UserProfile(
+        id=user["id"],
+        username=user["username"],
+        email=user["email"],
+        created_at=DUMMY_USER["created_at"],
+        learning_goals=user["learning_goals"],
+        skill_level=user["skill_level"],
+        interests=user["interests"],
+        email_frequency=user.get("email_frequency", EmailFrequency.WEEKLY),
+        weekly_reminders_enabled=user.get("weekly_reminders_enabled", True),
+        progress_reports_enabled=user.get("progress_reports_enabled", True),
+        instant_email_enabled=user.get("instant_email_enabled", True)
+    )
+
 @router.put("/profile", response_model=UserProfile)
 async def update_user_profile(
     profile_update: UserProfileUpdate,

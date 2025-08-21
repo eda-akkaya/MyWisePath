@@ -52,8 +52,16 @@ def generate_ai_roadmap(interests: List[str], skill_level: str, learning_goals: 
         Sadece JSON formatında cevap ver, başka açıklama ekleme.
         """
         
-        response = ai_service.model.generate_content(prompt)
-        response_text = response.text.strip()
+        if not ai_service.model:
+            print("AI model mevcut değil, fallback roadmap kullanılıyor")
+            return get_fallback_roadmap(interests, skill_level)
+            
+        try:
+            response = ai_service.model.generate_content(prompt)
+            response_text = response.text.strip()
+        except Exception as e:
+            print(f"AI model error: {e}")
+            return get_fallback_roadmap(interests, skill_level)
         
         print(f"AI Response: {response_text}")
         
@@ -80,10 +88,72 @@ def generate_ai_roadmap(interests: List[str], skill_level: str, learning_goals: 
         # Fallback olarak basit roadmap döndür
         return get_fallback_roadmap(interests, skill_level)
 
+def get_resource_urls():
+    """Eğitim kaynaklarının URL'lerini döndür"""
+    return {
+        # Python Resources
+        "Python.org Tutorial": "https://docs.python.org/3/tutorial/",
+        "freeCodeCamp Python": "https://www.freecodecamp.org/learn/scientific-computing-with-python/",
+        "Codecademy Python": "https://www.codecademy.com/learn/learn-python-3",
+        "Coursera Python Data Structures": "https://www.coursera.org/learn/python-data",
+        "LeetCode Python": "https://leetcode.com/problemset/all/?languageTags=python",
+        "HackerRank Python": "https://www.hackerrank.com/domains/python",
+        "Django Documentation": "https://docs.djangoproject.com/",
+        "Flask Tutorial": "https://flask.palletsprojects.com/en/2.3.x/quickstart/",
+        "Real Python Web Dev": "https://realpython.com/tutorials/web-dev/",
+        
+        # Web Development Resources
+        "MDN Web Docs": "https://developer.mozilla.org/en-US/docs/Web",
+        "W3Schools": "https://www.w3schools.com/",
+        "freeCodeCamp HTML/CSS": "https://www.freecodecamp.org/learn/responsive-web-design/",
+        "JavaScript.info": "https://javascript.info/",
+        "Eloquent JavaScript": "https://eloquentjavascript.net/",
+        "freeCodeCamp JavaScript": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/",
+        "React Documentation": "https://react.dev/",
+        "React Tutorial": "https://react.dev/learn",
+        "Udemy React Course": "https://www.udemy.com/course/react-the-complete-guide-incl-redux/",
+        "Node.js Documentation": "https://nodejs.org/en/docs/",
+        "Express.js Tutorial": "https://expressjs.com/",
+        "freeCodeCamp Backend": "https://www.freecodecamp.org/learn/back-end-development-and-apis/",
+        
+        # Data Science Resources
+        "Codecademy Python Course": "https://www.codecademy.com/learn/learn-python-3",
+        "Pandas Documentation": "https://pandas.pydata.org/docs/",
+        "NumPy Documentation": "https://numpy.org/doc/",
+        "Matplotlib Tutorial": "https://matplotlib.org/stable/tutorials/index.html",
+        "Seaborn Tutorial": "https://seaborn.pydata.org/tutorial.html",
+        "scikit-learn Tutorial": "https://scikit-learn.org/stable/tutorial/",
+        "Kaggle Courses": "https://www.kaggle.com/learn",
+        "DataCamp Python": "https://www.datacamp.com/courses/intro-to-python-for-data-science",
+        
+        # Machine Learning Resources
+        "TensorFlow Tutorial": "https://www.tensorflow.org/tutorials",
+        "PyTorch Tutorial": "https://pytorch.org/tutorials/",
+        "Andrew Ng ML Course": "https://www.coursera.org/learn/machine-learning",
+        "fast.ai": "https://www.fast.ai/",
+        "Stanford CS231n": "http://cs231n.stanford.edu/",
+        "Stanford CS224N": "http://web.stanford.edu/class/cs224n/",
+        "OpenCV": "https://opencv.org/",
+        "NLTK": "https://www.nltk.org/",
+        "spaCy": "https://spacy.io/",
+        
+        # Cloud & DevOps
+        "AWS Machine Learning": "https://aws.amazon.com/machine-learning/",
+        "Google Cloud AI": "https://cloud.google.com/ai",
+        "Azure Machine Learning": "https://azure.microsoft.com/en-us/services/machine-learning/",
+        "Docker Tutorial": "https://docs.docker.com/get-started/",
+        "Kubernetes Tutorial": "https://kubernetes.io/docs/tutorials/",
+        "Git Tutorial": "https://git-scm.com/doc",
+        "GitHub Learning": "https://docs.github.com/en/get-started"
+    }
+
 def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
     """AI çalışmadığında basit roadmap döndür"""
     
     import random
+    
+    # Resource URL'lerini al
+    resource_urls = get_resource_urls()
     
     # İlgi alanlarına göre basit roadmap oluştur
     interests_text = ' '.join(interests).lower()
@@ -98,7 +168,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "beginner",
                 "estimated_hours": 20,
                 "prerequisites": [],
-                "resources": ["Python.org Tutorial", "freeCodeCamp Python", "Codecademy Python"]
+                "resources": [
+                    "Python.org Tutorial: " + resource_urls.get("Python.org Tutorial", "#"),
+                    "freeCodeCamp Python: " + resource_urls.get("freeCodeCamp Python", "#"),
+                    "Codecademy Python: " + resource_urls.get("Codecademy Python", "#")
+                ]
             },
             {
                 "id": "py_2",
@@ -107,7 +181,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "intermediate",
                 "estimated_hours": 30,
                 "prerequisites": ["Python Temelleri"],
-                "resources": ["Coursera Python Data Structures", "LeetCode Python", "HackerRank Python"]
+                "resources": [
+                    "Coursera Python Data Structures: " + resource_urls.get("Coursera Python Data Structures", "#"),
+                    "LeetCode Python: " + resource_urls.get("LeetCode Python", "#"),
+                    "HackerRank Python: " + resource_urls.get("HackerRank Python", "#")
+                ]
             },
             {
                 "id": "py_3",
@@ -116,7 +194,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "intermediate",
                 "estimated_hours": 25,
                 "prerequisites": ["Veri Yapıları ve Algoritmalar"],
-                "resources": ["Django Documentation", "Flask Tutorial", "Real Python Web Dev"]
+                "resources": [
+                    "Django Documentation: " + resource_urls.get("Django Documentation", "#"),
+                    "Flask Tutorial: " + resource_urls.get("Flask Tutorial", "#"),
+                    "Real Python Web Dev: " + resource_urls.get("Real Python Web Dev", "#")
+                ]
             }
         ]
         
@@ -136,7 +218,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "beginner",
                 "estimated_hours": 15,
                 "prerequisites": [],
-                "resources": ["MDN Web Docs", "W3Schools", "freeCodeCamp HTML/CSS"]
+                "resources": [
+                    "MDN Web Docs: " + resource_urls.get("MDN Web Docs", "#"),
+                    "W3Schools: " + resource_urls.get("W3Schools", "#"),
+                    "freeCodeCamp HTML/CSS: " + resource_urls.get("freeCodeCamp HTML/CSS", "#")
+                ]
             },
             {
                 "id": "web_2",
@@ -145,7 +231,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "beginner",
                 "estimated_hours": 25,
                 "prerequisites": ["HTML & CSS Temelleri"],
-                "resources": ["JavaScript.info", "Eloquent JavaScript", "freeCodeCamp JavaScript"]
+                "resources": [
+                    "JavaScript.info: " + resource_urls.get("JavaScript.info", "#"),
+                    "Eloquent JavaScript: " + resource_urls.get("Eloquent JavaScript", "#"),
+                    "freeCodeCamp JavaScript: " + resource_urls.get("freeCodeCamp JavaScript", "#")
+                ]
             },
             {
                 "id": "web_3",
@@ -154,7 +244,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "intermediate",
                 "estimated_hours": 35,
                 "prerequisites": ["JavaScript Temelleri"],
-                "resources": ["React Documentation", "React Tutorial", "Udemy React Course"]
+                "resources": [
+                    "React Documentation: " + resource_urls.get("React Documentation", "#"),
+                    "React Tutorial: " + resource_urls.get("React Tutorial", "#"),
+                    "Udemy React Course: " + resource_urls.get("Udemy React Course", "#")
+                ]
             },
             {
                 "id": "web_4",
@@ -163,7 +257,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "intermediate",
                 "estimated_hours": 30,
                 "prerequisites": ["JavaScript Temelleri"],
-                "resources": ["Node.js Documentation", "Express.js Tutorial", "freeCodeCamp Backend"]
+                "resources": [
+                    {"name": "Node.js Documentation", "url": resource_urls.get("Node.js Documentation", "#")},
+                    {"name": "Express.js Tutorial", "url": resource_urls.get("Express.js Tutorial", "#")},
+                    {"name": "freeCodeCamp Backend", "url": resource_urls.get("freeCodeCamp Backend", "#")}
+                ]
             }
         ]
         
@@ -183,7 +281,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "beginner",
                 "estimated_hours": 20,
                 "prerequisites": [],
-                "resources": ["Python.org Tutorial", "Codecademy Python Course", "freeCodeCamp Python"]
+                "resources": [
+                    {"name": "Python.org Tutorial", "url": resource_urls.get("Python.org Tutorial", "#")},
+                    {"name": "Codecademy Python Course", "url": resource_urls.get("Codecademy Python Course", "#")},
+                    {"name": "freeCodeCamp Python", "url": resource_urls.get("freeCodeCamp Python", "#")}
+                ]
             },
             {
                 "id": "ds_2", 
@@ -192,7 +294,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "beginner",
                 "estimated_hours": 25,
                 "prerequisites": ["Python Temelleri"],
-                "resources": ["Pandas Documentation", "DataCamp Course", "Real Python Data Science"]
+                "resources": [
+                    {"name": "Pandas Documentation", "url": resource_urls.get("Pandas Documentation", "#")},
+                    {"name": "DataCamp Python", "url": resource_urls.get("DataCamp Python", "#")},
+                    {"name": "NumPy Documentation", "url": resource_urls.get("NumPy Documentation", "#")}
+                ]
             },
             {
                 "id": "ds_3",
@@ -201,7 +307,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "intermediate",
                 "estimated_hours": 15,
                 "prerequisites": ["Veri Manipülasyonu"],
-                "resources": ["Matplotlib Tutorial", "Seaborn Gallery", "Plotly Documentation"]
+                "resources": [
+                    {"name": "Matplotlib Tutorial", "url": resource_urls.get("Matplotlib Tutorial", "#")},
+                    {"name": "Seaborn Tutorial", "url": resource_urls.get("Seaborn Tutorial", "#")},
+                    {"name": "scikit-learn Tutorial", "url": resource_urls.get("scikit-learn Tutorial", "#")}
+                ]
             }
         ]
         
@@ -221,7 +331,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "beginner",
                 "estimated_hours": 40,
                 "prerequisites": [],
-                "resources": ["Khan Academy Math", "MIT OpenCourseWare", "3Blue1Brown YouTube"]
+                "resources": [
+                    {"name": "Andrew Ng ML Course", "url": resource_urls.get("Andrew Ng ML Course", "#")},
+                    {"name": "TensorFlow Tutorial", "url": resource_urls.get("TensorFlow Tutorial", "#")},
+                    {"name": "PyTorch Tutorial", "url": resource_urls.get("PyTorch Tutorial", "#")}
+                ]
             },
             {
                 "id": "ml_2",
@@ -230,7 +344,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "beginner",
                 "estimated_hours": 30,
                 "prerequisites": ["Matematik Temelleri"],
-                "resources": ["DataCamp Python", "freeCodeCamp Data Analysis", "Coursera Python"]
+                "resources": [
+                    {"name": "DataCamp Python", "url": resource_urls.get("DataCamp Python", "#")},
+                    {"name": "freeCodeCamp Python", "url": resource_urls.get("freeCodeCamp Python", "#")},
+                    {"name": "Pandas Documentation", "url": resource_urls.get("Pandas Documentation", "#")}
+                ]
             },
             {
                 "id": "ml_3",
@@ -239,7 +357,11 @@ def get_fallback_roadmap(interests: List[str], skill_level: str) -> dict:
                 "difficulty": "intermediate",
                 "estimated_hours": 35,
                 "prerequisites": ["Python ve Veri Bilimi"],
-                "resources": ["Coursera ML Course", "Scikit-learn Documentation", "Kaggle Courses"]
+                "resources": [
+                    {"name": "Andrew Ng ML Course", "url": resource_urls.get("Andrew Ng ML Course", "#")},
+                    {"name": "scikit-learn Tutorial", "url": resource_urls.get("scikit-learn Tutorial", "#")},
+                    {"name": "Kaggle Courses", "url": resource_urls.get("Kaggle Courses", "#")}
+                ]
             }
         ]
         
@@ -317,12 +439,28 @@ async def generate_roadmap(
     
     user_id = payload.get("sub")
     
-    # AI ile dinamik roadmap oluştur
-    roadmap_data = generate_ai_roadmap(request.interests, request.skill_level, request.learning_goals)
+    try:
+        # AI ile dinamik roadmap oluştur
+        roadmap_data = generate_ai_roadmap(request.interests, request.skill_level, request.learning_goals)
+    except Exception as e:
+        print(f"Roadmap generation error: {e}")
+        # Fallback roadmap kullan
+        roadmap_data = get_fallback_roadmap(request.interests, request.skill_level)
+    
+    # Roadmap data kontrolü
+    if not roadmap_data or "title" not in roadmap_data or "modules" not in roadmap_data:
+        print("Roadmap data eksik, fallback kullanılıyor")
+        roadmap_data = get_fallback_roadmap(request.interests, request.skill_level)
     
     # Modülleri oluştur ve eğitim içerikleri ile zenginleştir
     modules = []
     for i, module_data in enumerate(roadmap_data["modules"]):
+        # Resources'ları string formatına çevir
+        resources = module_data.get("resources", [])
+        if resources and isinstance(resources[0], dict):
+            # Dictionary listesi ise string listesine çevir
+            resources = [f"{r.get('name', 'Resource')}: {r.get('url', '#')}" for r in resources]
+        
         module = Module(
             id=module_data["id"],
             title=module_data["title"],
@@ -330,7 +468,7 @@ async def generate_roadmap(
             difficulty=module_data["difficulty"],
             estimated_hours=module_data["estimated_hours"],
             prerequisites=module_data.get("prerequisites", []),
-            resources=module_data.get("resources", []),
+            resources=resources,
             completed=False,
             progress_percentage=0
         )
@@ -460,6 +598,60 @@ async def generate_roadmap_from_chat(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Yol haritası oluşturulurken bir hata oluştu")
+
+@router.get("/{roadmap_id}")
+async def get_roadmap_by_id(
+    roadmap_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Belirli bir roadmap'i ID ile getir"""
+    
+    # Token doğrulama
+    payload = verify_token(credentials.credentials)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Geçersiz token")
+    
+    # For now, return a mock roadmap based on the ID
+    # In a real implementation, this would fetch from a database
+    mock_roadmap = {
+        "roadmap_id": roadmap_id,
+        "title": f"Roadmap #{roadmap_id}",
+        "description": "Bu roadmap, seçilen becerileri geliştirmek için tasarlanmış kapsamlı bir öğrenme yolculuğudur.",
+        "skill_level": "beginner",
+        "estimated_duration_hours": 9,
+        "created_at": "2024-01-01T00:00:00Z",
+        "modules": [
+            {
+                "id": "1",
+                "title": "Temel Kavramlar",
+                "description": "Bu modülde temel kavramları öğreneceksiniz.",
+                "duration_minutes": 120,
+                "difficulty": "Başlangıç",
+                "resources": ["Video ders", "PDF doküman", "Pratik alıştırmalar"],
+                "quiz_questions": ["Soru 1", "Soru 2", "Soru 3"]
+            },
+            {
+                "id": "2",
+                "title": "İleri Seviye Teknikler",
+                "description": "İleri seviye teknikleri ve uygulamaları keşfedin.",
+                "duration_minutes": 180,
+                "difficulty": "Orta",
+                "resources": ["Video ders", "Kod örnekleri", "Proje çalışması"],
+                "quiz_questions": ["Soru 1", "Soru 2", "Soru 3", "Soru 4"]
+            },
+            {
+                "id": "3",
+                "title": "Uygulama Projeleri",
+                "description": "Öğrendiklerinizi gerçek projelerde uygulayın.",
+                "duration_minutes": 240,
+                "difficulty": "İleri",
+                "resources": ["Proje rehberi", "Kod deposu", "Canlı demo"],
+                "quiz_questions": ["Soru 1", "Soru 2"]
+            }
+        ]
+    }
+    
+    return mock_roadmap
 
 @router.get("/content-recommendations/{topic}")
 async def get_content_recommendations(

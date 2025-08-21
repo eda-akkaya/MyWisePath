@@ -8,7 +8,7 @@ from services.email_service import email_service
 from models.user import EmailFrequency, UserProfileUpdate
 from utils.auth import get_current_user
 
-router = APIRouter(prefix="/api/v1/automation", tags=["Automation"])
+router = APIRouter(tags=["Automation"])
 
 class TestEmailRequest(BaseModel):
     email: str

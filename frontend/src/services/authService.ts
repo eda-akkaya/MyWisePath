@@ -8,6 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 saniye timeout
 });
 
 // Request interceptor - token ekle
@@ -18,6 +19,53 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Response interceptor - hata yönetimi
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', error);
+    
+    // HTML response kontrolü
+    if (error.response && error.response.data && typeof error.response.data === 'string') {
+      if (error.response.data.includes('<!DOCTYPE') || error.response.data.includes('<html')) {
+        console.error('HTML response received instead of JSON');
+        throw new Error('Sunucu hatası: Geçersiz yanıt formatı. Lütfen sayfayı yenileyin.');
+      }
+    }
+    
+    // Network hatası
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('Bağlantı zaman aşımı. Lütfen tekrar deneyin.');
+    }
+    
+    if (error.code === 'ERR_NETWORK') {
+      throw new Error('Ağ bağlantısı hatası. Backend çalışıyor mu kontrol edin.');
+    }
+    
+    // HTTP hata kodları
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      switch (status) {
+        case 401:
+          localStorage.removeItem('token');
+          throw new Error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
+        case 403:
+          throw new Error('Bu işlem için yetkiniz yok.');
+        case 404:
+          throw new Error('İstenen kaynak bulunamadı.');
+        case 500:
+          throw new Error('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
+        default:
+          throw new Error(data?.detail || `HTTP ${status} hatası`);
+      }
+    }
+    
+    throw new Error('Beklenmeyen bir hata oluştu.');
+  }
+);
 
 export interface LoginRequest {
   email: string;
@@ -77,6 +125,8 @@ export interface InstantEmailRequest {
   target_email?: string;
 }
 
+export { api };
+
 export const authService = {
   async login(email: string, password: string): Promise<UserResponse> {
     try {
@@ -84,6 +134,12 @@ export const authService = {
         email,
         password,
       });
+      
+      // Store token in localStorage
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
+      
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -100,6 +156,12 @@ export const authService = {
         email,
         password,
       });
+      
+      // Store token in localStorage
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
+      
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -144,6 +206,74 @@ export const authService = {
       throw new Error('Profil güncellenemedi');
     }
 
+    return response.json();
+  },
+
+  async updateProfile(userData: UserProfile): Promise<UserProfile> {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token bulunamadı');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(userData)
+    });
+
+    if (!response.ok) {
+      throw new Error('Profil güncellenemedi');
+    }
+
+    return response.json();
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token bulunamadı');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/change-password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Şifre değiştirilemedi');
+    }
+
+    return response.json();
+  },
+
+  async deleteAccount(): Promise<{ message: string }> {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token bulunamadı');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/delete-account`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Hesap silinemedi');
+    }
+
+    localStorage.removeItem('token');
     return response.json();
   },
 
@@ -210,5 +340,22 @@ export const authService = {
     }
 
     return response.json();
+  },
+
+  // Token yönetimi
+  getToken(): string | null {
+    return localStorage.getItem('token');
+  },
+
+  setToken(token: string): void {
+    localStorage.setItem('token', token);
+  },
+
+  removeToken(): void {
+    localStorage.removeItem('token');
+  },
+
+  isLoggedIn(): boolean {
+    return this.getToken() !== null;
   }
 }; 

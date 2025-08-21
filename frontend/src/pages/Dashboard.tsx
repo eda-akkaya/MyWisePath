@@ -17,6 +17,9 @@ import {
   Grow,
   LinearProgress,
   Badge,
+  Dialog,
+  DialogTitle,
+  DialogContent,
 } from '@mui/material';
 import {
   School,
@@ -32,15 +35,19 @@ import {
   Star,
   CheckCircle,
   PlayArrow,
+  PictureAsPdf,
+  Close,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import Chatbot from '../components/Chatbot';
 import UserProfile from '../components/UserProfile';
+import PDFGenerator from '../components/PDFGenerator';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [showPDFGenerator, setShowPDFGenerator] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -67,9 +74,11 @@ const Dashboard: React.FC = () => {
           mb: 4,
           p: 3,
           borderRadius: 4,
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
+          backgroundColor: 'background.paper',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
+          border: 1,
+          borderColor: 'divider',
+          boxShadow: 3,
         }}>
           <Typography 
             variant="h4" 
@@ -96,9 +105,10 @@ const Dashboard: React.FC = () => {
         <Card sx={{ 
           mb: 4,
           borderRadius: 4,
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
+          backgroundColor: 'background.paper',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
+          border: 1,
+          borderColor: 'divider',
         }}>
           <CardContent sx={{ p: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -149,7 +159,7 @@ const Dashboard: React.FC = () => {
                 onClick={handleOpenProfile} 
                 size="large"
                 sx={{
-                  bgcolor: 'grey.100',
+                  bgcolor: 'action.hover',
                   '&:hover': {
                     bgcolor: 'primary.main',
                     color: 'white',
@@ -232,7 +242,7 @@ const Dashboard: React.FC = () => {
                       flexGrow: 1,
                       height: 8,
                       borderRadius: 4,
-                      bgcolor: 'grey.200',
+                      bgcolor: 'action.hover',
                       '& .MuiLinearProgress-bar': {
                         borderRadius: 4,
                       },
@@ -259,12 +269,13 @@ const Dashboard: React.FC = () => {
                 cursor: 'pointer',
                 transition: 'all 0.3s ease-in-out',
                 borderRadius: 4,
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
+                backgroundColor: 'background.paper',
                 backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(0, 0, 0, 0.08)',
+                border: 1,
+                borderColor: 'divider',
                 '&:hover': {
                   transform: 'translateY(-8px)',
-                  boxShadow: '0 20px 40px rgba(99, 102, 241, 0.15)',
+                  boxShadow: 8,
                   borderColor: 'primary.main',
                 },
               }}
@@ -297,11 +308,9 @@ const Dashboard: React.FC = () => {
                 size="large"
                 sx={{ 
                   alignSelf: 'flex-start',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
+                    boxShadow: 4,
                   },
                 }}
               >
@@ -323,12 +332,13 @@ const Dashboard: React.FC = () => {
                 cursor: 'pointer',
                 transition: 'all 0.3s ease-in-out',
                 borderRadius: 4,
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
+                backgroundColor: 'background.paper',
                 backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(0, 0, 0, 0.08)',
+                border: 1,
+                borderColor: 'divider',
                 '&:hover': {
                   transform: 'translateY(-8px)',
-                  boxShadow: '0 20px 40px rgba(245, 158, 11, 0.15)',
+                  boxShadow: 8,
                   borderColor: 'secondary.main',
                 },
               }}
@@ -358,13 +368,12 @@ const Dashboard: React.FC = () => {
                 variant="contained"
                 startIcon={<PlayArrow />}
                 size="large"
+                color="secondary"
                 sx={{ 
                   alignSelf: 'flex-start',
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #d97706 0%, #ea580c 100%)',
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 25px rgba(245, 158, 11, 0.3)',
+                    boxShadow: 4,
                   },
                 }}
               >
@@ -380,8 +389,51 @@ const Dashboard: React.FC = () => {
         <Chatbot />
       </Box>
 
+      {/* PDF Generator Button */}
+      <Box sx={{ mt: 4, textAlign: 'center' }}>
+        <Button
+          variant="outlined"
+          onClick={() => setShowPDFGenerator(true)}
+          startIcon={<PictureAsPdf />}
+          size="large"
+          sx={{
+            borderRadius: 2,
+            px: 4,
+            py: 1.5,
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: 4,
+            },
+          }}
+        >
+          PDF Oluşturucu
+        </Button>
+      </Box>
+
       {/* Profil Modal */}
       <UserProfile open={profileOpen} onClose={() => setProfileOpen(false)} />
+
+      {/* PDF Generator Dialog */}
+      {showPDFGenerator && (
+        <Dialog 
+          open={showPDFGenerator} 
+          onClose={() => setShowPDFGenerator(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h6">PDF Oluşturucu</Typography>
+            <IconButton onClick={() => setShowPDFGenerator(false)}>
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <PDFGenerator 
+              onClose={() => setShowPDFGenerator(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </Container>
   );
 };

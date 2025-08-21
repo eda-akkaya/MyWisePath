@@ -229,7 +229,7 @@ class SerpAIService:
         
         return unique_results[:10]  # En iyi 10 sonuç
     
-    def extract_learning_concepts(self, user_message: str) -> List[str]:
+    async def extract_learning_concepts(self, user_message: str) -> List[str]:
         """
         Kullanıcı mesajından öğrenme kavramlarını çıkar
         """

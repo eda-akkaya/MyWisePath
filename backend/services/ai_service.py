@@ -16,9 +16,14 @@ class AIService:
     def _initialize_model(self):
         """Gemini model'ini başlat"""
         try:
+            if not GEMINI_API_KEY:
+                print("GEMINI_API_KEY bulunamadı, AI servisi devre dışı")
+                self.model = None
+                return
+                
             import google.generativeai as genai
             genai.configure(api_key=GEMINI_API_KEY)
-            self.model = genai.GenerativeModel('gemini-pro')
+            self.model = genai.GenerativeModel('gemini-1.5-flash')
             print("Gemini model başarıyla başlatıldı")
         except Exception as e:
             print(f"Gemini model başlatma hatası: {e}")
@@ -34,6 +39,10 @@ class AIService:
             user_profile: Kullanıcı profil bilgileri (eski parametre)
             roadmap_info: Roadmap oluşturma sırasındaki kullanıcı bilgileri (yeni parametre)
         """
+        
+        # Model yoksa fallback cevap döndür
+        if not self.model:
+            return self.get_fallback_response(user_message)
         
         try:
             # Dinamik sistem prompt'u oluştur - roadmap bilgileri öncelikli
@@ -571,34 +580,40 @@ class AIService:
         return "Bu konuda size yardımcı olabilirim! Daha spesifik bilgi verirseniz size uygun bir yol haritası oluşturabilirim."
 
     def get_fallback_response(self, user_message: str) -> str:
+        """AI servisi çalışmadığında fallback cevap döndür"""
+        fallback_responses = [
+            "Üzgünüm, şu anda AI servisi geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.",
+            "AI servisi şu anda bakımda. Size yardımcı olmak için sabırsızlanıyorum!",
+            "Teknik bir sorun yaşıyoruz. Lütfen birkaç dakika sonra tekrar deneyin.",
+            "AI servisi geçici olarak devre dışı. Yakında geri döneceğim!"
+        ]
+        import random
+        return random.choice(fallback_responses)
+
+    async def get_simple_ai_response(self, user_message: str) -> str:
         """
-        AI çalışmadığında dummy cevap döndür
+        Basit AI cevabı - karmaşık context gerektirmez
         """
-        user_message_lower = user_message.lower()
+        if not self.model:
+            return self.get_fallback_response(user_message)
         
-        fallback_responses = {
-            "merhaba": "Merhaba! Size nasıl yardımcı olabilirim? MyWisePath'te öğrenme yolculuğunuza başlayabilirsiniz! 🚀",
-            "selam": "Selam! Öğrenme tutkunuzu desteklemek için buradayım. Hangi konuda yardıma ihtiyacınız var?",
-            "python": "Python harika bir programlama dili! Başlamak için Python.org'daki tutorial'ı öneririm. Ayrıca MyWisePath'te size özel Python yol haritası oluşturabilirim! 🐍",
-            "veri bilimi": "Veri bilimi çok heyecan verici bir alan! Python, Pandas, NumPy ve Matplotlib ile başlayabilirsiniz. Size kişiselleştirilmiş bir veri bilimi yol haritası hazırlayabilirim! 📊",
-            "web geliştirme": "Web geliştirme için HTML, CSS ve JavaScript temellerini öğrenmeniz gerekiyor. React, Node.js gibi modern teknolojilerle devam edebilirsiniz! 💻",
-            "makine öğrenmesi": "Makine öğrenmesi için önce matematik temellerinizi güçlendirmeniz gerekiyor. Python, scikit-learn ve TensorFlow ile başlayabilirsiniz! 🤖",
-            "yol haritası": "Size kişiselleştirilmiş bir yol haritası oluşturmak için ilgi alanlarınızı ve hedeflerinizi bilmem gerekiyor. Dashboard'da 'Yol Haritası Oluştur' butonuna tıklayabilirsiniz! 🗺️",
-            "javascript": "JavaScript web geliştirmenin temelidir! Modern JavaScript (ES6+) öğrenerek React, Vue.js gibi framework'lerle devam edebilirsiniz! ⚡",
-            "react": "React harika bir frontend framework'ü! JavaScript temellerini öğrendikten sonra React ile modern web uygulamaları geliştirebilirsiniz! ⚛️",
-            "node.js": "Node.js ile backend geliştirme yapabilirsiniz! JavaScript bilginizi hem frontend hem backend'de kullanabilirsiniz! 🟢",
-            "sql": "SQL veritabanı yönetimi için temel dildir! MySQL, PostgreSQL gibi veritabanlarıyla çalışmayı öğrenebilirsiniz! 🗄️",
-            "docker": "Docker container teknolojisi ile uygulamalarınızı kolayca deploy edebilirsiniz! DevOps yolculuğunuzda önemli bir adım! 🐳",
-            "git": "Git versiyon kontrol sistemi ile kodlarınızı güvenle yönetebilirsiniz! GitHub, GitLab gibi platformlarla işbirliği yapabilirsiniz! 📝",
-            "yardım": "Size yardımcı olmaktan mutluluk duyarım! Hangi konuda bilgi almak istiyorsunuz? Programlama, veri bilimi, web geliştirme veya başka bir alan? 🤝",
-            "teşekkür": "Rica ederim! Öğrenme yolculuğunuzda size destek olmaya devam edeceğim. Başka sorularınız varsa sormaktan çekinmeyin! 😊"
-        }
-        
-        for keyword, response in fallback_responses.items():
-            if keyword in user_message_lower:
-                return response
-        
-        return "Bu konuda size yardımcı olabilirim! Programlama, veri bilimi, web geliştirme gibi alanlarda sorularınızı sorabilirsiniz. Daha spesifik bir soru sorarsanız size daha detaylı bilgi verebilirim! 💡"
+        try:
+            simple_prompt = f"""
+            Sen MyWisePath öğrenme platformunun Bilge Rehber ✨'sin. 
+            Kullanıcıya kısa, yardımcı ve Türkçe cevap ver.
+            Maksimum 2-3 cümle.
+            
+            Kullanıcı mesajı: {user_message}
+            
+            Asistan:
+            """
+            
+            response = self.model.generate_content(simple_prompt)
+            return response.text.strip()
+            
+        except Exception as e:
+            print(f"Simple AI response error: {e}")
+            return self.get_fallback_response(user_message)
 
 # Global AI service instance
 ai_service = AIService() 

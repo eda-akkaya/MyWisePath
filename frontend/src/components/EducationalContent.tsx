@@ -8,7 +8,6 @@ import {
   Button,
   Link,
   IconButton,
-  Tooltip,
 } from '@mui/material';
 import {
   School as SchoolIcon,

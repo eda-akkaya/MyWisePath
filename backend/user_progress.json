@@ -1,0 +1,145 @@
+{
+  "demo@mywisepath.com_roadmap_demo@mywisepath.com_1755727322.138856": {
+    "roadmap_id": "roadmap_demo@mywisepath.com_1755727322.138856",
+    "user_id": "demo@mywisepath.com",
+    "overall_progress": 62,
+    "completed_modules": 1,
+    "total_modules": 2,
+    "total_time_spent_minutes": 30,
+    "started_at": "2025-08-21 01:02:11.862266",
+    "estimated_completion_date": "2025-08-21T13:11:41.259245",
+    "last_activity": "2025-08-21T12:53:18.033436",
+    "module_progress": [
+      {
+        "module_id": "module_1",
+        "roadmap_id": "roadmap_demo@mywisepath.com_1755727322.138856",
+        "user_id": "demo@mywisepath.com",
+        "status": "in_progress",
+        "progress_percentage": 25,
+        "time_spent_minutes": 30,
+        "started_at": "2025-08-21T01:02:11.864064",
+        "completed_at": null,
+        "last_activity": "2025-08-21T01:02:11.864077",
+        "notes": null,
+        "quiz_results": []
+      },
+      {
+        "module_id": "1",
+        "roadmap_id": "roadmap_demo@mywisepath.com_1755727322.138856",
+        "user_id": "demo@mywisepath.com",
+        "status": "completed",
+        "progress_percentage": 100,
+        "time_spent_minutes": 0,
+        "started_at": "2025-08-21T12:53:15.888098",
+        "completed_at": "2025-08-21T12:53:18.033429",
+        "last_activity": "2025-08-21T12:53:18.033423",
+        "notes": null,
+        "quiz_results": []
+      }
+    ]
+  },
+  "demo@mywisepath.com_roadmap_demo@mywisepath.com_1755727729.903516": {
+    "roadmap_id": "roadmap_demo@mywisepath.com_1755727729.903516",
+    "user_id": "demo@mywisepath.com",
+    "overall_progress": 100,
+    "completed_modules": 1,
+    "total_modules": 1,
+    "total_time_spent_minutes": 0,
+    "started_at": "2025-08-21 01:09:05.786549",
+    "estimated_completion_date": "2025-08-21T02:39:05.787941",
+    "last_activity": "2025-08-21T01:09:08.250875",
+    "module_progress": [
+      {
+        "module_id": "module_1",
+        "roadmap_id": "roadmap_demo@mywisepath.com_1755727729.903516",
+        "user_id": "demo@mywisepath.com",
+        "status": "completed",
+        "progress_percentage": 100,
+        "time_spent_minutes": 0,
+        "started_at": "2025-08-21T01:09:05.787892",
+        "completed_at": "2025-08-21T01:09:08.250862",
+        "last_activity": "2025-08-21T01:09:08.250851",
+        "notes": null,
+        "quiz_results": []
+      }
+    ]
+  },
+  "demo@mywisepath.com_roadmap_demo@mywisepath.com_1755769003.099874": {
+    "roadmap_id": "roadmap_demo@mywisepath.com_1755769003.099874",
+    "user_id": "demo@mywisepath.com",
+    "overall_progress": 25,
+    "completed_modules": 0,
+    "total_modules": 1,
+    "total_time_spent_minutes": 30,
+    "started_at": "2025-08-21 12:37:37.155752",
+    "estimated_completion_date": "2025-08-21T14:07:37.157463",
+    "last_activity": "2025-08-21T12:37:37.157460",
+    "module_progress": [
+      {
+        "module_id": "module_1",
+        "roadmap_id": "roadmap_demo@mywisepath.com_1755769003.099874",
+        "user_id": "demo@mywisepath.com",
+        "status": "in_progress",
+        "progress_percentage": 25,
+        "time_spent_minutes": 30,
+        "started_at": "2025-08-21T12:37:37.157418",
+        "completed_at": null,
+        "last_activity": "2025-08-21T12:37:37.157424",
+        "notes": null,
+        "quiz_results": []
+      }
+    ]
+  },
+  "demo@mywisepath.com_roadmap_demo@mywisepath.com_1755769794.352673": {
+    "roadmap_id": "roadmap_demo@mywisepath.com_1755769794.352673",
+    "user_id": "demo@mywisepath.com",
+    "overall_progress": 25,
+    "completed_modules": 0,
+    "total_modules": 1,
+    "total_time_spent_minutes": 30,
+    "started_at": "2025-08-21 12:50:46.720483",
+    "estimated_completion_date": "2025-08-21T14:20:46.721886",
+    "last_activity": "2025-08-21T12:50:46.721883",
+    "module_progress": [
+      {
+        "module_id": "module_1",
+        "roadmap_id": "roadmap_demo@mywisepath.com_1755769794.352673",
+        "user_id": "demo@mywisepath.com",
+        "status": "in_progress",
+        "progress_percentage": 25,
+        "time_spent_minutes": 30,
+        "started_at": "2025-08-21T12:50:46.721863",
+        "completed_at": null,
+        "last_activity": "2025-08-21T12:50:46.721871",
+        "notes": null,
+        "quiz_results": []
+      }
+    ]
+  },
+  "demo@mywisepath.com_roadmap_demo@mywisepath.com_1755786683.369195": {
+    "roadmap_id": "roadmap_demo@mywisepath.com_1755786683.369195",
+    "user_id": "demo@mywisepath.com",
+    "overall_progress": 25,
+    "completed_modules": 0,
+    "total_modules": 1,
+    "total_time_spent_minutes": 30,
+    "started_at": "2025-08-21 17:31:50.630110",
+    "estimated_completion_date": "2025-08-21T19:01:50.632927",
+    "last_activity": "2025-08-21T17:31:50.632922",
+    "module_progress": [
+      {
+        "module_id": "module_3",
+        "roadmap_id": "roadmap_demo@mywisepath.com_1755786683.369195",
+        "user_id": "demo@mywisepath.com",
+        "status": "in_progress",
+        "progress_percentage": 25,
+        "time_spent_minutes": 30,
+        "started_at": "2025-08-21T17:31:50.632887",
+        "completed_at": null,
+        "last_activity": "2025-08-21T17:31:50.632894",
+        "notes": null,
+        "quiz_results": []
+      }
+    ]
+  }
+}

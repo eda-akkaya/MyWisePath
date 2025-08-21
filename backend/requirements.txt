@@ -5,10 +5,30 @@ python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 python-dotenv
-google-generativeai
 schedule
 aiohttp
 beautifulsoup4
 requests
 asyncio
-google-search-results 
+google-search-results
+
+# Modern Agent Framework'leri
+langchain
+langchain-community
+langchain-core
+langchain-experimental
+langchain-google-genai
+
+# SmolAgent (Alternatif)
+# smol-agent
+
+# MCP (Model Context Protocol) - Gelecekte eklenebilir
+# mcp
+
+# Vector Database ve Embeddings (Ücretsiz)
+chromadb
+sentence-transformers
+faiss-cpu
+PyMuPDF
+reportlab
+numpy 

@@ -409,6 +409,29 @@ async def chat_with_bot(request: ChatRequest, credentials: HTTPAuthorizationCred
         print(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="Chatbot hatası")
 
+@router.post("/query-public")
+async def chat_with_bot_public(request: ChatRequest):
+    """Chatbot ile konuş (public endpoint - authentication gerekmez)"""
+    
+    try:
+        # Basit AI cevabı al
+        simple_response = await ai_service.get_simple_ai_response(request.message)
+        
+        return {
+            "message": simple_response,
+            "timestamp": datetime.now().isoformat(),
+            "success": True
+        }
+        
+    except Exception as e:
+        print(f"Public chat error: {e}")
+        return {
+            "message": "Üzgünüm, şu anda size yardımcı olamıyorum. Lütfen daha sonra tekrar deneyin.",
+            "timestamp": datetime.now().isoformat(),
+            "success": False,
+            "error": str(e)
+        }
+
 async def get_user_profile(user_id: str) -> dict:
     """Kullanıcı profil bilgilerini al (dummy data - gerçek uygulamada veritabanından gelecek)"""
     # Dummy user data - gerçek uygulamada veritabanından alınacak
@@ -820,4 +843,156 @@ async def create_dynamic_roadmap(
         
     except Exception as e:
         print(f"Dynamic roadmap creation error: {e}")
-        raise HTTPException(status_code=500, detail="Dinamik roadmap oluşturulurken hata oluştu") 
+        raise HTTPException(status_code=500, detail="Dinamik roadmap oluşturulurken hata oluştu")
+
+@router.post("/comprehensive-learning")
+async def comprehensive_learning(
+    request: dict,
+    # credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """SERP AI ve Roadmap Agent kullanarak kapsamlı öğrenme içeriği ve yol haritası oluştur"""
+    
+    try:
+        # Token doğrulama
+        # payload = verify_token(credentials.credentials)
+        # if payload is None:
+        #     raise HTTPException(status_code=401, detail="Geçersiz token")
+        
+        topic = request.get("topic", "")
+        if not topic:
+            raise HTTPException(status_code=400, detail="Konu belirtilmedi")
+        
+        print(f"Comprehensive learning request for topic: {topic}")
+        
+        # 1. SERP AI ile güncel eğitim içerikleri ara
+        print("Searching with SERP AI...")
+        serp_results = await serp_ai_service.search_educational_content(topic)
+        
+        # 2. Kavramları çıkar
+        print("Extracting concepts...")
+        extracted_concepts = await serp_ai_service.extract_learning_concepts(topic)
+        
+        # 3. Roadmap Agent ile yol haritası oluştur
+        print("Generating roadmap...")
+        roadmap_prompt = f"""
+        {topic} konusu için detaylı bir öğrenme yol haritası oluştur.
+        
+        Çıkarılan kavramlar: {', '.join(extracted_concepts)}
+        
+        Bulunan eğitim kaynakları:
+        {chr(10).join([f"- {result['title']} ({result['platform']})" for result in serp_results[:5]])}
+        
+        Lütfen şu formatta bir yol haritası oluştur:
+        1. Başlangıç seviyesi modüller (temel kavramlar)
+        2. Orta seviye modüller (uygulama ve pratik)
+        3. İleri seviye modüller (uzmanlaşma)
+        
+        Her modül için:
+        - Başlık
+        - Açıklama
+        - Tahmini süre
+        - Zorluk seviyesi
+        - Önerilen kaynaklar
+        """
+        
+        roadmap_response = ai_service.model.generate_content(roadmap_prompt)
+        roadmap_text = roadmap_response.text.strip()
+        
+        # Roadmap'i yapılandırılmış formata çevir
+        structured_roadmap = {
+            "title": f"{topic.title()} Öğrenme Yol Haritası",
+            "description": f"{topic} konusunda kapsamlı öğrenme yolculuğu",
+            "modules": [],
+            "total_estimated_hours": 0,
+            "overall_progress": 0
+        }
+        
+        # AI'dan gelen roadmap metnini parse et
+        lines = roadmap_text.split('\n')
+        current_module = None
+        
+        for line in lines:
+            line = line.strip()
+            if line.startswith(('1.', '2.', '3.', '4.', '5.')) and 'modül' in line.lower():
+                if current_module:
+                    structured_roadmap["modules"].append(current_module)
+                
+                current_module = {
+                    "id": f"module_{len(structured_roadmap['modules']) + 1}",
+                    "title": line.split('.', 1)[1].strip(),
+                    "description": "",
+                    "difficulty": "beginner",
+                    "estimated_hours": 20,
+                    "prerequisites": [],
+                    "resources": []
+                }
+            elif current_module and line:
+                if "açıklama" in line.lower() or "description" in line.lower():
+                    current_module["description"] = line.split(':', 1)[1].strip() if ':' in line else line
+                elif "süre" in line.lower() or "saat" in line.lower():
+                    # Saat bilgisini çıkar
+                    import re
+                    hours_match = re.search(r'(\d+)', line)
+                    if hours_match:
+                        current_module["estimated_hours"] = int(hours_match.group(1))
+                elif "zorluk" in line.lower() or "seviye" in line.lower():
+                    if "ileri" in line.lower() or "advanced" in line.lower():
+                        current_module["difficulty"] = "advanced"
+                    elif "orta" in line.lower() or "intermediate" in line.lower():
+                        current_module["difficulty"] = "intermediate"
+                    else:
+                        current_module["difficulty"] = "beginner"
+                elif line and not line.startswith(('-', '•', '*')) and len(line) > 10:
+                    # Eğer açıklama henüz set edilmemişse, bu satırı açıklama olarak kullan
+                    if not current_module["description"]:
+                        current_module["description"] = line
+        
+        if current_module:
+            structured_roadmap["modules"].append(current_module)
+        
+        # Eğer modül bulunamadıysa, basit bir modül oluştur
+        if not structured_roadmap["modules"]:
+            structured_roadmap["modules"] = [
+                {
+                    "id": "module_1",
+                    "title": f"{topic} Temelleri",
+                    "description": f"{topic} konusunun temel kavramlarını öğrenin",
+                    "difficulty": "beginner",
+                    "estimated_hours": 20,
+                    "prerequisites": [],
+                    "resources": []
+                }
+            ]
+        
+        # Toplam saat hesapla
+        structured_roadmap["total_estimated_hours"] = sum(
+            module["estimated_hours"] for module in structured_roadmap["modules"]
+        )
+        
+        # SERP sonuçlarını roadmap modüllerine dağıt
+        for i, module in enumerate(structured_roadmap["modules"]):
+            start_idx = i * 2
+            end_idx = start_idx + 2
+            module_resources = serp_results[start_idx:end_idx]
+            
+            for resource in module_resources:
+                module["resources"].append({
+                    "title": resource["title"],
+                    "platform": resource["platform"],
+                    "url": resource["url"],
+                    "type": resource["type"]
+                })
+        
+        return {
+            "topic": topic,
+            "serp_results": serp_results,
+            "roadmap": structured_roadmap,
+            "extracted_concepts": extracted_concepts,
+            "total_serp_count": len(serp_results),
+            "timestamp": datetime.now().isoformat(),
+            "ai_generated": True
+        }
+        
+    except Exception as e:
+        print(f"Comprehensive learning error: {e}")
+        raise HTTPException(status_code=500, detail=f"Kapsamlı öğrenme içeriği oluşturulurken hata oluştu: {str(e)}") 

@@ -135,10 +135,11 @@ const Login: React.FC = () => {
               alignItems: 'center',
               width: '100%',
               borderRadius: 4,
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              border: 1,
+              borderColor: 'divider',
+              backgroundColor: 'background.paper',
               backdropFilter: 'blur(10px)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              boxShadow: 3,
             }}
           >
             <Typography 
@@ -230,11 +231,9 @@ const Login: React.FC = () => {
                   py: 1.5,
                   fontSize: '1rem',
                   fontWeight: 600,
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
                     transform: 'translateY(-1px)',
-                    boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
+                    boxShadow: 4,
                   },
                   transition: 'all 0.2s ease-in-out',
                 }}
@@ -248,8 +247,9 @@ const Login: React.FC = () => {
               sx={{ 
                 width: '100%', 
                 mt: 2, 
-                bgcolor: 'grey.50',
-                border: '1px solid rgba(0, 0, 0, 0.08)',
+                bgcolor: 'action.hover',
+                border: 1,
+                borderColor: 'divider',
                 borderRadius: 3,
               }}
             >
@@ -285,7 +285,8 @@ const Login: React.FC = () => {
                       bgcolor: 'background.paper',
                       p: 1,
                       borderRadius: 1,
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      border: 1,
+                      borderColor: 'divider',
                     }}
                   >
                     <strong>Email:</strong> demo@mywisepath.com
@@ -300,7 +301,8 @@ const Login: React.FC = () => {
                       bgcolor: 'background.paper',
                       p: 1,
                       borderRadius: 1,
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      border: 1,
+                      borderColor: 'divider',
                     }}
                   >
                     <strong>Şifre:</strong> demo123

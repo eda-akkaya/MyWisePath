@@ -29,13 +29,18 @@ import {
   Menu as MenuIcon,
   Person,
   AutoAwesome,
+  TrendingUp,
+  DarkMode,
+  LightMode,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { darkMode, toggleDarkMode } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -69,6 +74,11 @@ const Navigation: React.FC = () => {
       icon: <Timeline />,
     },
     {
+      label: 'İlerleme',
+      path: '/progress',
+      icon: <TrendingUp />,
+    },
+    {
       label: 'Öğrenme Ortamı',
       path: '/learning-environment',
       icon: <Psychology />,
@@ -99,7 +109,7 @@ const Navigation: React.FC = () => {
               backgroundColor: location.pathname === item.path ? 'primary.main' : 'transparent',
               color: location.pathname === item.path ? 'white' : 'inherit',
               '&:hover': {
-                backgroundColor: location.pathname === item.path ? 'primary.dark' : 'grey.100',
+                backgroundColor: location.pathname === item.path ? 'primary.dark' : 'action.hover',
               },
               width: '100%',
               textAlign: 'left',
@@ -123,9 +133,10 @@ const Navigation: React.FC = () => {
         position="sticky"
         elevation={0}
         sx={{
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)',
+          backgroundColor: 'background.paper',
           backdropFilter: 'blur(10px)',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          borderBottom: 1,
+          borderColor: 'divider',
         }}
       >
         <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -198,9 +209,22 @@ const Navigation: React.FC = () => {
               sx={{ display: { xs: 'none', sm: 'flex' } }}
             />
             <IconButton
+              onClick={toggleDarkMode}
+              sx={{
+                bgcolor: 'action.hover',
+                color: 'text.primary',
+                '&:hover': {
+                  bgcolor: 'action.selected',
+                },
+              }}
+              title={darkMode ? 'Açık temaya geç' : 'Karanlık temaya geç'}
+            >
+              {darkMode ? <LightMode /> : <DarkMode />}
+            </IconButton>
+            <IconButton
               onClick={handleProfileMenuOpen}
               sx={{
-                bgcolor: 'grey.100',
+                bgcolor: 'action.hover',
                 '&:hover': {
                   bgcolor: 'primary.main',
                   color: 'white',
@@ -228,7 +252,7 @@ const Navigation: React.FC = () => {
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: 280,
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)',
+            backgroundColor: 'background.paper',
             backdropFilter: 'blur(10px)',
           },
         }}
@@ -256,7 +280,7 @@ const Navigation: React.FC = () => {
           </ListItemIcon>
           Dashboard
         </MenuItem>
-        <MenuItem onClick={() => { navigate('/dashboard'); handleProfileMenuClose(); }}>
+        <MenuItem onClick={() => { navigate('/settings'); handleProfileMenuClose(); }}>
           <ListItemIcon>
             <Settings fontSize="small" />
           </ListItemIcon>

@@ -1,6 +1,13 @@
 # MyWisePath - Kişiselleştirilmiş Öğrenme Platformu
+English version of this file -> README_EN.md
+
+*Bu projeyi Akbank ve UpSchool tarafından düzenlenen AI First Developer Programı kapsamında öğrendiğim bilgileri ve teknikleri uygulamak için gerçekleştirdim. Tamamen yapay zeka (Cursor Pro) kullanarak yaptım (Programın amacı buydu).*
+
+*PROJE_OZETI.md ve SISTEM_DIYAGRAMLARI.md dosyalarını okuyarak sistemin yapısını kolayca kavrayabilirsiniz.*
 
 MyWisePath, kullanıcıların kişisel öğrenme yolculuklarını planlamalarına ve takip etmelerine yardımcı olan bir platformdur. AI destekli öneriler, interaktif chatbot ve kişiselleştirilmiş roadmap'ler sunar.
+
+
 
 ## 🚀 Özellikler
 
@@ -9,6 +16,77 @@ MyWisePath, kullanıcıların kişisel öğrenme yolculuklarını planlamaların
 - **Kişiselleştirilmiş Roadmap**: Hedeflerinize uygun öğrenme yolları
 - **E-posta Otomasyonu**: Haftalık hatırlatıcılar ve ilerleme raporları
 - **Modern Web Arayüzü**: React ile geliştirilmiş kullanıcı dostu arayüz
+- **RAG Sistemi**: Gelişmiş arama ve bilgi çağırma sistemi
+- **LangChain Agent'ları**: Modern AI framework entegrasyonu
+- **Serp AI Entegrasyonu**: Gerçek zamanlı eğitim içeriği arama
+- **Parametric System Prompt**: Roadmap tabanlı dinamik AI yanıtları
+- **PDF Raporlama**: Roadmap ve ilerleme raporları PDF formatında
+
+## 🔍 RAG (Retrieval-Augmented Generation) Sistemi
+
+### Özellikler:
+- **Semantik Arama**: Kullanıcı sorgularını anlayarak ilgili içerikleri bulma
+- **Filtreleme**: Kaynak, dosya türü ve içerik türüne göre filtreleme
+- **Skorlama**: Benzerlik skorları ile sonuçları sıralama
+- **Bağlam Çıkarımı**: Sorgu için ilgili bağlam metinlerini oluşturma
+- **Tavsiye Sistemi**: Kişiselleştirilmiş öğrenme önerileri
+- **PDF İndirme**: Roadmap ve ilerleme raporları PDF formatında
+
+### API Endpoint'leri:
+```
+POST /api/v1/rag/upload-document          # Belge yükleme
+POST /api/v1/rag/add-roadmap              # Roadmap ekleme
+GET  /api/v1/rag/search                   # Genel arama
+GET  /api/v1/rag/search-roadmaps          # Roadmap araması
+POST /api/v1/rag/recommendations/learning # Öğrenme tavsiyeleri
+POST /api/v1/rag/generate-pdf/roadmap     # Roadmap PDF'i
+GET  /api/v1/rag/stats                    # Sistem istatistikleri
+```
+
+## 🤖 LangChain Agent Sistemi
+
+### Modern AI Framework Entegrasyonu:
+- **LangChain Roadmap Agent**: Gelişmiş roadmap oluşturma
+- **Tool Integration**: Decorator tabanlı araç entegrasyonu
+- **Conversation Memory**: Gelişmiş konuşma belleği
+- **Error Handling**: Kapsamlı hata yönetimi
+- **Async Support**: Asenkron işlem desteği
+
+### API Endpoint'leri:
+```
+POST /api/v1/agents/langchain/create-roadmap  # LangChain roadmap oluşturma
+GET  /api/v1/agents/status                    # Agent durumu
+POST /api/v1/agents/execute-task              # Görev yürütme
+```
+
+## 🔍 Serp AI Entegrasyonu
+
+### Gerçek Zamanlı Eğitim İçeriği:
+- **Otomatik Kavram Çıkarma**: LLM ile öğrenme kavramlarını tanıma
+- **Eğitim Platformları**: Coursera, Udemy, YouTube vb. entegrasyonu
+- **Trend Konular**: Güncel popüler eğitim konuları
+- **Seviye Bazlı Arama**: Kullanıcı seviyesine uygun içerik
+
+### API Endpoint'leri:
+```
+POST /api/v1/chatbot/search-with-serp         # Serp AI ile arama
+GET  /api/v1/chatbot/trending-educational-topics  # Trend konular
+POST /api/v1/chatbot/comprehensive-learning   # Kapsamlı öğrenme
+```
+
+## 🎯 Parametric System Prompt
+
+### Roadmap Tabanlı Dinamik Yanıtlar:
+- **Seviye Bazlı Kişiselleştirme**: Beginner, Intermediate, Advanced
+- **İlgi Alanı Bazlı Özelleştirme**: AI, Web Development, Python vb.
+- **Hedef Odaklı Rehberlik**: Kariyer, Proje, Sertifika odaklı
+- **Zaman Planı Bazlı Özelleştirme**: Haftalık çalışma saatine göre
+
+### Özellikler:
+- Kullanıcının roadmap bilgilerine göre otomatik prompt oluşturma
+- Seviye bazlı talimatlar ve öneriler
+- İlgi alanlarına özel yönergeler
+- Zaman planına uygun öğrenme stratejileri
 
 ## 📧 E-posta Otomasyonu
 
@@ -53,6 +131,9 @@ cp env_example.txt .env
 # Gemini API Configuration
 GEMINI_API_KEY=your_gemini_api_key_here
 
+# Serp AI Configuration
+SERP_API_KEY=your_serp_api_key_here
+
 # Email Configuration
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
@@ -64,9 +145,19 @@ EMAIL_FROM_NAME=MyWisePath
 # Email Automation Settings
 WEEKLY_REMINDER_ENABLED=true
 PROGRESS_REPORT_ENABLED=true
+
+# Vector Store Settings (RAG System)
+VECTOR_STORE_TYPE=chroma
+VECTOR_STORE_PATH=./vector_store
+EMBEDDING_MODEL=huggingface
 ```
 
-3. **Backend'i başlatın:**
+3. **Gerekli dizinleri oluşturun:**
+```bash
+mkdir -p vector_store pdfs temp
+```
+
+4. **Backend'i başlatın:**
 ```bash
 python main.py
 ```
@@ -86,8 +177,27 @@ npm start
 
 ## 🧪 Test
 
-E-posta otomasyonunu test etmek için:
+### RAG Sistemi Testi:
+```bash
+python test_rag_system.py
+```
 
+### LangChain Agent Testi:
+```bash
+python test_langchain_agent.py
+```
+
+### Serp AI Testi:
+```bash
+python test_serp_ai.py
+```
+
+### Parametric Prompt Testi:
+```bash
+python test_parametric_prompt.py
+```
+
+### E-posta Otomasyonu Testi:
 ```bash
 python test_email_automation.py
 ```
@@ -104,15 +214,40 @@ MyWisePath/
 │   │   ├── auth.py               # Kimlik doğrulama
 │   │   ├── roadmap.py            # Roadmap işlemleri
 │   │   ├── chatbot.py            # Chatbot API
-│   │   └── automation.py         # E-posta otomasyonu
+│   │   ├── automation.py         # E-posta otomasyonu
+│   │   ├── agents.py             # Agent yönetimi
+│   │   └── rag.py                # RAG sistemi
 │   ├── services/                  # İş mantığı servisleri
 │   │   ├── ai_service.py         # AI servisleri
 │   │   ├── educational_content_service.py  # İçerik servisleri
 │   │   ├── email_service.py      # E-posta servisi
-│   │   └── automation_service.py # Otomasyon servisi
-│   └── models/                    # Veri modelleri
+│   │   ├── automation_service.py # Otomasyon servisi
+│   │   ├── serp_ai_service.py    # Serp AI entegrasyonu
+│   │   └── live_content_service.py # Gerçek zamanlı içerik
+│   ├── agents/                    # AI Agent'ları
+│   │   ├── base_agent.py         # Temel agent sınıfı
+│   │   ├── agent_manager.py      # Agent yöneticisi
+│   │   ├── roadmap_agent.py      # Roadmap agent'ı
+│   │   └── langchain_agent.py    # LangChain agent'ı
+│   ├── rag/                       # RAG Sistemi
+│   │   ├── document_processor.py # Belge işleme
+│   │   ├── vector_store.py       # VectorDB yönetimi
+│   │   ├── search_service.py     # Arama servisi
+│   │   ├── recommendation_service.py # Tavsiye sistemi
+│   │   └── pdf_generator.py      # PDF oluşturma
+│   ├── models/                    # Veri modelleri
+│   ├── vector_store/              # Vector veritabanı
+│   └── pdfs/                      # PDF dosyaları
 ├── frontend/                      # React uygulaması
-└── test_email_automation.py      # E-posta otomasyonu test dosyası
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── RAGSearch.tsx     # RAG arama bileşeni
+│   │   │   ├── AgentDashboard.tsx # Agent dashboard
+│   │   │   └── PDFGenerator.tsx  # PDF oluşturma
+│   │   └── services/
+│   │       ├── agentService.ts   # Agent servisleri
+│   │       └── ragService.ts     # RAG servisleri
+└── test_*.py                     # Test dosyaları
 ```
 
 ## 🔧 E-posta Konfigürasyonu
@@ -133,6 +268,46 @@ MyWisePath/
 - **Haftalık Hatırlatıcılar**: Her Pazartesi 09:00
 - **İlerleme Raporları**: Her Pazar 18:00
 - **Özel Zamanlama**: API üzerinden özelleştirilebilir
+
+## 🔑 API Key'ler
+
+### Gerekli API Key'ler:
+1. **Gemini API Key**: AI servisleri için
+2. **Serp API Key**: Gerçek zamanlı arama için
+
+### API Key Alma:
+- **Gemini**: [Google AI Studio](https://makersuite.google.com/app/apikey)
+- **Serp AI**: [Serp API](https://serpapi.com/)
+
+## 🚀 Kullanım Örnekleri
+
+### 1. Roadmap Oluşturma
+```bash
+curl -X POST "http://localhost:8001/api/v1/roadmap/generate" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "skill_level": "intermediate",
+    "interests": ["Python", "AI"],
+    "learning_goals": ["Machine Learning"],
+    "available_hours_per_week": 20,
+    "target_timeline_months": 6
+  }'
+```
+
+### 2. RAG Arama
+```bash
+curl -X GET "http://localhost:8001/api/v1/rag/search?query=Python%20programlama&k=5" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### 3. Serp AI ile Arama
+```bash
+curl -X POST "http://localhost:8001/api/v1/chatbot/search-with-serp" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Python öğrenmek istiyorum"}'
+```
 
 ## 🤝 Katkıda Bulunma
 

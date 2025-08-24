@@ -31,13 +31,13 @@ app.add_middleware(
 )
 
 # Router'ları ekle
-app.include_router(auth.router, prefix="/api/v1")
-app.include_router(roadmap.router, prefix="/api/v1")
-app.include_router(chatbot.router, prefix="/api/v1")
+app.include_router(auth.router)
+app.include_router(roadmap.router)
+app.include_router(chatbot.router)
 app.include_router(automation.router, prefix="/api/v1/automation")
-app.include_router(learning_environment.router, prefix="/api/v1")
-app.include_router(agents.router, prefix="/api/v1")
-app.include_router(progress.router, prefix="/api/v1")
+app.include_router(learning_environment.router)
+app.include_router(agents.router)
+app.include_router(progress.router)
 app.include_router(rag.router, prefix="/api/v1")
 
 @app.get("/")

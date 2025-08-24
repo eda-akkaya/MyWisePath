@@ -67,13 +67,13 @@
   "demo@mywisepath.com_roadmap_demo@mywisepath.com_1755769003.099874": {
     "roadmap_id": "roadmap_demo@mywisepath.com_1755769003.099874",
     "user_id": "demo@mywisepath.com",
-    "overall_progress": 25,
+    "overall_progress": 12,
     "completed_modules": 0,
-    "total_modules": 1,
+    "total_modules": 2,
     "total_time_spent_minutes": 30,
     "started_at": "2025-08-21 12:37:37.155752",
-    "estimated_completion_date": "2025-08-21T14:07:37.157463",
-    "last_activity": "2025-08-21T12:37:37.157460",
+    "estimated_completion_date": "2025-08-24T17:27:50.536477",
+    "last_activity": "2025-08-24T13:47:50.536473",
     "module_progress": [
       {
         "module_id": "module_1",
@@ -85,6 +85,19 @@
         "started_at": "2025-08-21T12:37:37.157418",
         "completed_at": null,
         "last_activity": "2025-08-21T12:37:37.157424",
+        "notes": null,
+        "quiz_results": []
+      },
+      {
+        "module_id": "1",
+        "roadmap_id": "roadmap_demo@mywisepath.com_1755769003.099874",
+        "user_id": "demo@mywisepath.com",
+        "status": "in_progress",
+        "progress_percentage": 0,
+        "time_spent_minutes": 0,
+        "started_at": "2025-08-24T13:47:50.536456",
+        "completed_at": null,
+        "last_activity": "2025-08-24T13:47:50.536462",
         "notes": null,
         "quiz_results": []
       }
@@ -137,6 +150,32 @@
         "started_at": "2025-08-21T17:31:50.632887",
         "completed_at": null,
         "last_activity": "2025-08-21T17:31:50.632894",
+        "notes": null,
+        "quiz_results": []
+      }
+    ]
+  },
+  "demo@mywisepath.com_roadmap_demo@mywisepath.com_1756031677.415459": {
+    "roadmap_id": "roadmap_demo@mywisepath.com_1756031677.415459",
+    "user_id": "demo@mywisepath.com",
+    "overall_progress": 25,
+    "completed_modules": 0,
+    "total_modules": 1,
+    "total_time_spent_minutes": 30,
+    "started_at": "2025-08-24 13:35:18.438029",
+    "estimated_completion_date": "2025-08-24T15:05:18.440712",
+    "last_activity": "2025-08-24T13:35:18.440702",
+    "module_progress": [
+      {
+        "module_id": "module_1",
+        "roadmap_id": "roadmap_demo@mywisepath.com_1756031677.415459",
+        "user_id": "demo@mywisepath.com",
+        "status": "in_progress",
+        "progress_percentage": 25,
+        "time_spent_minutes": 30,
+        "started_at": "2025-08-24T13:35:18.440625",
+        "completed_at": null,
+        "last_activity": "2025-08-24T13:35:18.440643",
         "notes": null,
         "quiz_results": []
       }
